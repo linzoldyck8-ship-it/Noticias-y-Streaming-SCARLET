@@ -17,7 +17,8 @@
 
     <div class="container">
         <div class="tab-buttons">
-            <button class="tab-btn active" onclick="showTab(event, 'noticias')">📰 Noticias & Blog</button>
+            <button class="tab-btn active" onclick="showTab(event, 'noticias')">📰 Noticias</button>
+            <button class="tab-btn" onclick="showTab(event, 'blogs')">✍️ Blogs & Artículos</button>
             <button class="tab-btn" onclick="showTab(event, 'jugadores')">🎮 Jugadores / Roster</button>
             <button class="tab-btn" onclick="showTab(event, 'partidos')">⚔️ Partidos y Resultados</button>
             <button class="tab-btn" onclick="showTab(event, 'stream_config')">🔴 Configuración Canal Stream</button>
@@ -51,6 +52,38 @@
                 <div class="panel">
                     <h2>Noticias Publicadas</h2>
                     <div id="admin-noticias" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BLOGS -->
+        <div id="tab-blogs" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-blogs">Crear Nuevo Artículo / Blog</h2>
+                    <form onsubmit="handleFormSubmit(event, 'blogs', {titulo: b_t.value, categoria: b_c.value, resumen: b_r.value, contenido: b_co.value, autor: b_a.value, imagen_url: b_i.value})">
+                        <input type="hidden" id="edit-id-blogs">
+                        <label>Título del Artículo</label>
+                        <input type="text" id="b_t" placeholder="Ej: Análisis táctico del último parche" required>
+                        <label>Categoría / Tema</label>
+                        <input type="text" id="b_c" placeholder="Ej: Meta / Opinión / Guía" required>
+                        <label>Resumen Breve</label>
+                        <input type="text" id="b_r" placeholder="Breve descripción..." required>
+                        <label>Contenido del Blog</label>
+                        <textarea id="b_co" placeholder="Escribe el artículo completo aquí..."></textarea>
+                        <label>Autor / Escritor</label>
+                        <input type="text" id="b_a" placeholder="Ej: Coach / Redacción" required>
+                        <label>URL de Imagen Destacada</label>
+                        <input type="url" id="b_i" placeholder="https://..." required>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-blogs" class="btn-primary">Guardar Artículo</button>
+                            <button type="button" id="cancel-blogs" class="btn-danger" style="display:none;" onclick="resetForm('blogs')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Artículos Publicados</h2>
+                    <div id="admin-blogs" class="admin-list"></div>
                 </div>
             </div>
         </div>
@@ -177,6 +210,13 @@
                 n_co.value = item.contenido || '';
                 n_a.value = item.autor || '';
                 n_i.value = item.imagen_url || '';
+            } else if (cat === 'blogs') {
+                b_t.value = item.titulo || '';
+                b_c.value = item.categoria || '';
+                b_r.value = item.resumen || '';
+                b_co.value = item.contenido || '';
+                b_a.value = item.autor || '';
+                b_i.value = item.imagen_url || '';
             } else if (cat === 'jugadores') {
                 j_nick.value = item.nickname || '';
                 j_real.value = item.nombre_real || '';
@@ -209,6 +249,7 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             loadList('noticias', item => `<b>[${item.categoria || 'NOTICIA'}]</b> ${item.titulo}`);
+            loadList('blogs', item => `<b>[${item.categoria || 'BLOG'}]</b> ${item.titulo}`);
             loadList('jugadores', item => `<b>${item.nickname}</b> (${item.juego})`);
             loadList('partidos', item => `<b>VS ${item.rival}</b> - ${item.torneo}`);
             loadList('stream_config', item => `<b>Canal:</b> ${item.canal_username}`);
