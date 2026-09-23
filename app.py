@@ -46,7 +46,7 @@ def index():
 def admin():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return render_template('admin_2.html')
+    return render_template('admin.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
