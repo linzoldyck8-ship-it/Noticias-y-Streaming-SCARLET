@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Esports Team</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo"><a href="/admin">⚙️ PANEL ADMINISTRADOR ESPORTS</a></div>
+        <div style="display: flex; gap: 10px;">
+            <a href="/" class="nav-btn">Volver a la Web</a>
+            <a href="/logout" class="nav-btn" style="background: #ef4444; border-color: #dc2626;">Cerrar Sesión</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="showTab(event, 'noticias')">📰 Noticias & Blog</button>
+            <button class="tab-btn" onclick="showTab(event, 'jugadores')">🎮 Jugadores / Roster</button>
+            <button class="tab-btn" onclick="showTab(event, 'partidos')">⚔️ Partidos y Resultados</button>
+            <button class="tab-btn" onclick="showTab(event, 'stream_config')">🔴 Configuración Canal Stream</button>
+        </div>
+
+        <!-- NOTICIAS -->
+        <div id="tab-noticias" class="tab-content">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-noticias">Crear Nueva Noticia</h2>
+                    <form onsubmit="handleFormSubmit(event, 'noticias', {titulo: n_t.value, categoria: n_c.value, resumen: n_r.value, contenido: n_co.value, autor: n_a.value, imagen_url: n_i.value})">
+                        <input type="hidden" id="edit-id-noticias">
+                        <label>Título de la Noticia</label>
+                        <input type="text" id="n_t" placeholder="Ej: ¡Clasificamos a la Gran Final!" required>
+                        <label>Categoría</label>
+                        <input type="text" id="n_c" placeholder="Ej: Anuncio / Valorant / Fichaje" required>
+                        <label>Resumen Breve</label>
+                        <input type="text" id="n_r" placeholder="Breve descripción..." required>
+                        <label>Contenido / Detalle</label>
+                        <textarea id="n_co" placeholder="Texto completo de la noticia..."></textarea>
+                        <label>Autor</label>
+                        <input type="text" id="n_a" placeholder="Ej: Manager / Staff" required>
+                        <label>URL de la Imagen / Banner</label>
+                        <input type="url" id="n_i" placeholder="https://..." required>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-noticias" class="btn-primary">Guardar Noticia</button>
+                            <button type="button" id="cancel-noticias" class="btn-danger" style="display:none;" onclick="resetForm('noticias')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Noticias Publicadas</h2>
+                    <div id="admin-noticias" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JUGADORES / ROSTER -->
+        <div id="tab-jugadores" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-jugadores">Agregar Jugador al Roster</h2>
+                    <form onsubmit="handleFormSubmit(event, 'jugadores', {nickname: j_nick.value, nombre_real: j_real.value, juego: j_game.value, rol: j_rol.value, redes: j_redes.value, imagen_url: j_i.value})">
+                        <input type="hidden" id="edit-id-jugadores">
+                        <label>Nickname / ID</label>
+                        <input type="text" id="j_nick" placeholder="Ej: Shadow99" required>
+                        <label>Nombre Real</label>
+                        <input type="text" id="j_real" placeholder="Ej: Carlos Mendoza">
+                        <label>Juego / Disciplina</label>
+                        <input type="text" id="j_game" placeholder="Ej: League of Legends / CS2 / Valorant" required>
+                        <label>Rol en el Equipo</label>
+                        <input type="text" id="j_rol" placeholder="Ej: IGL / Awper / Midlaner" required>
+                        <label>Redes Sociales (Twitter/IG/Twitch)</label>
+                        <input type="text" id="j_redes" placeholder="@usuario_twitter">
+                        <label>URL de Foto del Jugador</label>
+                        <input type="url" id="j_i" placeholder="https://..." required>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-jugadores" class="btn-primary">Guardar Jugador</button>
+                            <button type="button" id="cancel-jugadores" class="btn-danger" style="display:none;" onclick="resetForm('jugadores')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Jugadores Registrados</h2>
+                    <div id="admin-jugadores" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PARTIDOS -->
+        <div id="tab-partidos" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-partidos">Agregar Partido / Encuentro</h2>
+                    <form onsubmit="handleFormSubmit(event, 'partidos', {torneo: p_t.value, rival: p_r.value, fecha_hora: p_f.value, resultado: p_res.value})">
+                        <input type="hidden" id="edit-id-partidos">
+                        <label>Torneo / Liga</label>
+                        <input type="text" id="p_t" placeholder="Ej: Copa Challenger Semifinal" required>
+                        <label>Nombre del Rival / Equipo Enemigo</label>
+                        <input type="text" id="p_r" placeholder="Ej: Team Alpha Esports" required>
+                        <label>Fecha y Hora</label>
+                        <input type="text" id="p_f" placeholder="Ej: 28 Octubre - 20:00 HRS" required>
+                        <label>Estado / Resultado</label>
+                        <input type="text" id="p_res" placeholder="Ej: Victoria 2 - 1 / Pendiente" required>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-partidos" class="btn-primary">Guardar Partido</button>
+                            <button type="button" id="cancel-partidos" class="btn-danger" style="display:none;" onclick="resetForm('partidos')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Partidos Registrados</h2>
+                    <div id="admin-partidos" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIGURACIÓN STREAM -->
+        <div id="tab-stream_config" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2>Configuración del Canal de Transmisión</h2>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Ingresa el usuario de Twitch oficial para vincular el reproductor en vivo y el chat.</p>
+                    <form onsubmit="handleFormSubmit(event, 'stream_config', {titulo: s_title.value, canal_username: s_channel.value})">
+                        <input type="hidden" id="edit-id-stream_config">
+                        <label>Título Personalizado de la Transmisión</label>
+                        <input type="text" id="s_title" placeholder="Ej: Transmisión Oficial - TEAM ESPORTS" required>
+                        <label>Nombre de Usuario de Twitch (Canal)</label>
+                        <input type="text" id="s_channel" placeholder="Ej: gaules / ibai / tu_canal" required>
+                        <button type="submit" id="btn-stream_config" class="btn-primary">Guardar Configuración de Stream</button>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Canal Configurado Actualmente</h2>
+                    <div id="admin-stream_config" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const store = {};
+
+        function showTab(evt, name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + name).style.display = 'block';
+            evt.currentTarget.classList.add('active');
+        }
+
+        async function handleFormSubmit(e, cat, data) {
+            e.preventDefault();
+            const editId = document.getElementById(`edit-id-${cat}`).value;
+            const url = editId ? `/api/${cat}/${editId}` : `/api/${cat}`;
+            const method = editId ? 'PUT' : 'POST';
+
+            await fetch(url, {
+                method: method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            window.location.reload();
+        }
+
+        function prepareEdit(cat, id) {
+            const item = store[cat].find(x => x.id == id);
+            if (!item) return;
+
+            document.getElementById(`edit-id-${cat}`).value = item.id;
+            document.getElementById(`title-${cat}`).innerText = "✏️ Modificar Elemento";
+            document.getElementById(`btn-${cat}`).innerText = "Actualizar Cambios";
+
+            if (cat === 'noticias') {
+                n_t.value = item.titulo || '';
+                n_c.value = item.categoria || '';
+                n_r.value = item.resumen || '';
+                n_co.value = item.contenido || '';
+                n_a.value = item.autor || '';
+                n_i.value = item.imagen_url || '';
+            } else if (cat === 'jugadores') {
+                j_nick.value = item.nickname || '';
+                j_real.value = item.nombre_real || '';
+                j_game.value = item.juego || '';
+                j_rol.value = item.rol || '';
+                j_redes.value = item.redes || '';
+                j_i.value = item.imagen_url || '';
+            } else if (cat === 'partidos') {
+                p_t.value = item.torneo || '';
+                p_r.value = item.rival || '';
+                p_f.value = item.fecha_hora || '';
+                p_res.value = item.resultado || '';
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm(cat) {
+            document.getElementById(`edit-id-${cat}`).value = "";
+            document.getElementById(`title-${cat}`).innerText = "Añadir Elemento";
+            document.getElementById(`btn-${cat}`).innerText = "Guardar";
+        }
+
+        async function removeItem(cat, id) {
+            if(confirm('¿Deseas eliminar este registro?')) {
+                await fetch(`/api/${cat}/${id}`, { method: 'DELETE' });
+                window.location.reload();
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadList('noticias', item => `<b>[${item.categoria || 'NOTICIA'}]</b> ${item.titulo}`);
+            loadList('jugadores', item => `<b>${item.nickname}</b> (${item.juego})`);
+            loadList('partidos', item => `<b>VS ${item.rival}</b> - ${item.torneo}`);
+            loadList('stream_config', item => `<b>Canal:</b> ${item.canal_username}`);
+        });
+
+        async function loadList(cat, formatText) {
+            const res = await fetch(`/api/${cat}`);
+            const items = await res.json();
+            store[cat] = items;
+            const el = document.getElementById(`admin-${cat}`);
+            if(!items || !items.length) return el.innerHTML = '<p class="empty">Sin registros.</p>';
+            
+            el.innerHTML = items.map(item => `
+                <div class="admin-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div>${formatText(item)}</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-primary" style="padding:4px 10px; font-size:0.8rem;" onclick="prepareEdit('${cat}', '${item.id}')">✏️ Editar</button>
+                        <button class="btn-danger" style="padding:4px 10px; font-size:0.8rem;" onclick="removeItem('${cat}', '${item.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
