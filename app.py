@@ -9,7 +9,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# NOMBRE DE CANAL FIJO DE TWITCH (Escribe aquí el canal oficial)
+# NOMBRE DE CANAL FIJO DE TWITCH (Escribe aquí el nombre de tu usuario de Twitch)
 TWITCH_CHANNEL = "tu_canal_de_twitch"
 
 @app.route('/')
