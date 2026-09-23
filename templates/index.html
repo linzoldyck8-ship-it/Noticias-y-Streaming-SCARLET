@@ -12,7 +12,7 @@
            ========================================== */
         .card-img-wrapper {
             width: 100%;
-            height: 170px !important;
+            height: 210px;
             overflow: hidden;
             position: relative;
             background: #0f172a;
@@ -34,7 +34,7 @@
 
         /* Foto estilo retrato para Jugadores */
         .player-img-wrapper {
-            height: 280px !important;
+            height: 280px;
         }
 
         .player-img-wrapper img {
@@ -57,36 +57,6 @@
             object-position: center;
             border-radius: 8px;
             margin: 20px 0;
-        }
-
-        /* ==========================================
-           AJUSTE COMPACTO Y PROPORCIONADO DE TARJETAS
-           ========================================== */
-        .cards-grid {
-            align-items: start !important;
-        }
-
-        .detail-card {
-            height: auto !important;
-            min-height: initial !important;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-body {
-            padding: 16px !important;
-        }
-
-        .card-body h3 {
-            margin: 6px 0 !important;
-            font-size: 1.1rem !important;
-        }
-
-        .card-body .description {
-            margin-bottom: 15px !important;
-            color: #94a3b8;
-            font-size: 0.9rem;
-            line-height: 1.4;
         }
 
         /* ==========================================
@@ -764,7 +734,7 @@
             try {
                 const res = await fetch('/api/noticias');
                 const data = await res.json();
-                globalNoticias = (data || []).sort((a, b) => b.id - a.id);
+                globalNoticias = Array.isArray(data) ? data.sort((a, b) => b.id - a.id) : [];
                 renderNoticias(globalNoticias);
                 renderInicioNoticias(globalNoticias.slice(0, 3));
                 renderSidebarNoticias(globalNoticias);
@@ -838,7 +808,7 @@
             try {
                 const res = await fetch('/api/blogs');
                 const data = await res.json();
-                globalBlogs = (data || []).sort((a, b) => b.id - a.id);
+                globalBlogs = Array.isArray(data) ? data.sort((a, b) => b.id - a.id) : [];
                 renderBlogs(globalBlogs);
                 renderInicioBlogs(globalBlogs.slice(0, 3));
                 renderSidebarBlogs(globalBlogs);
@@ -941,7 +911,7 @@
             try {
                 const res = await fetch('/api/jugadores');
                 const data = await res.json();
-                globalRoster = data || [];
+                globalRoster = Array.isArray(data) ? data : [];
                 renderRoster(globalRoster);
                 renderSidebarRoster(globalRoster);
             } catch(e) { console.error("Error cargando roster:", e); }
@@ -1032,7 +1002,7 @@
             try {
                 const res = await fetch('/api/partidos');
                 const data = await res.json();
-                globalPartidos = data || [];
+                globalPartidos = Array.isArray(data) ? data : [];
                 renderPartidos(globalPartidos);
             } catch(e) { console.error("Error cargando partidos:", e); }
         }
