@@ -5,6 +5,7 @@ from supabase import create_client, Client
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'clave_secreta_esports_team')
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Permite hasta 50MB
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
 SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
@@ -75,25 +76,7 @@ def logout():
     return redirect(url_for('login'))
 
 # --- API CRUD UNIFICADA PARA ESPORTS Y BLOGS ---
-TABLAS_PERMITIDAS = ['noticias', 'blogs', 'jugadores', 'partidos', 'stream_config', 'comentarios']
-
-@app.route('/api/comentarios', methods=['GET'])
-def get_comentarios():
-    if not supabase:
-        return jsonify([])
-    try:
-        post_type = request.args.get('post_type')
-        post_id = request.args.get('post_id')
-        
-        query = supabase.table('comentarios').select('*')
-        if post_type and post_id:
-            query = query.eq('post_type', post_type).eq('post_id', str(post_id))
-            
-        res = query.order('creado_en', desc=True).execute()
-        return jsonify(res.data if res.data else [])
-    except Exception as e:
-        print("Error al obtener comentarios:", e)
-        return jsonify([]), 500
+TABLAS_PERMITIDAS = ['noticias', 'blogs', 'jugadores', 'partidos', 'stream_config']
 
 @app.route('/api/<tabla>', methods=['GET'])
 def get_items(tabla):
@@ -109,16 +92,12 @@ def get_items(tabla):
         return jsonify([]), 500
 
 @app.route('/api/<tabla>', methods=['POST'])
+@admin_required
 def create_item(tabla):
     if tabla not in TABLAS_PERMITIDAS:
         return jsonify({'error': 'Tabla no válida'}), 400
     if not supabase:
         return jsonify({'error': 'Base de datos no conectada'}), 500
-    
-    # Permitir publicaciones públicas de la comunidad para comentarios y blogs
-    if tabla not in ['comentarios', 'blogs'] and not session.get('logged_in'):
-        return jsonify({'error': 'No autorizado. Inicia sesión nuevamente.'}), 401
-
     try:
         data = request.get_json()
         res = supabase.table(tabla).insert(data).execute()
