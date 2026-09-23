@@ -12,7 +12,7 @@
            ========================================== */
         .card-img-wrapper {
             width: 100%;
-            height: 210px;
+            height: 170px !important;
             overflow: hidden;
             position: relative;
             background: #0f172a;
@@ -34,7 +34,7 @@
 
         /* Foto estilo retrato para Jugadores */
         .player-img-wrapper {
-            height: 280px;
+            height: 280px !important;
         }
 
         .player-img-wrapper img {
@@ -57,6 +57,36 @@
             object-position: center;
             border-radius: 8px;
             margin: 20px 0;
+        }
+
+        /* ==========================================
+           AJUSTE COMPACTO Y PROPORCIONADO DE TARJETAS
+           ========================================== */
+        .cards-grid {
+            align-items: start !important;
+        }
+
+        .detail-card {
+            height: auto !important;
+            min-height: initial !important;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-body {
+            padding: 16px !important;
+        }
+
+        .card-body h3 {
+            margin: 6px 0 !important;
+            font-size: 1.1rem !important;
+        }
+
+        .card-body .description {
+            margin-bottom: 15px !important;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            line-height: 1.4;
         }
 
         /* ==========================================
@@ -944,13 +974,12 @@
                             ${jugadores.map(j => `
                                 <div class="detail-card border-cyan">
                                     <div class="card-img-wrapper player-img-wrapper">
-                                        <img src="${j.imagen_url || 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
+                                        <img src="${j.imagen_url \vert{}\vert{} 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
                                     </div>
                                     <div class="card-body">
                                         <h3>"${j.nickname}"</h3>
                                         <div class="info-badge">Rol: ${j.rol || 'Jugador'}</div>
-                                        <p class="description" style="margin-top:8px;"><strong>Nombre:</strong> ${j.nombre_real || '-'}</p>
-                                        ${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
+                                        <p class="description" style="margin-top:8px;"><strong>Nombre:</strong> ${j.nombre_real \vert{}\vert{} '-'}</p>${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
