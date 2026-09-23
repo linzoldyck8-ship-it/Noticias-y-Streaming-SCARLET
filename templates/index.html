@@ -1,80 +1,311 @@
-from flask import Flask, render_template, request, jsonify
-from supabase import create_client, Client
-import os
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESPORTS TEAM - OFICIAL</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://embed.twitch.tv/embed/v1.js"></script>
+</head>
+<body>
+    <header class="top-nav">
+        <div class="nav-left">
+            <div class="logo"><a href="javascript:void(0)" onclick="switchSection('inicio')">⚔️ TEAM ESPORTS</a></div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="javascript:void(0)" onclick="switchSection('inicio')" class="nav-link">Inicio</a></li>
+                <li class="nav-item"><a href="javascript:void(0)" onclick="switchSection('noticias')" class="nav-link">📰 Noticias</a></li>
+                <li class="nav-item"><a href="javascript:void(0)" onclick="switchSection('blogs')" class="nav-link">✍️ Blogs</a></li>
+                <li class="nav-item"><a href="javascript:void(0)" onclick="switchSection('roster')" class="nav-link">🎮 Roster</a></li>
+                <li class="nav-item"><a href="javascript:void(0)" onclick="switchSection('partidos')" class="nav-link">⚔️ Partidos</a></li>
+                <li class="nav-item">
+                    <a href="javascript:void(0)" onclick="switchSection('stream')" class="nav-link live-nav-link">
+                        <span class="live-indicator" id="nav-live-dot"></span> 🔴 TRANSMISIÓN
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div><a href="/admin" class="nav-btn">⚙️ Admin</a></div>
+    </header>
 
-app = Flask(__name__)
+    <div class="container">
+        <!-- SECCIÓN 1: INICIO -->
+        <div id="sec-inicio" class="wiki-section active">
+            <div class="hero-banner">
+                <h1>BIENVENIDOS AL PORTAL OFICIAL</h1>
+                <p>Acompáñanos en nuestro camino a la cima. Sigue nuestras partidas en vivo, noticias, blogs y conoce a nuestros jugadores.</p>
+                <div style="margin-top: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="switchSection('stream')">🔴 Ver Transmisión en Vivo</button>
+                    <button class="nav-btn" onclick="switchSection('partidos')">📅 Próximos Partidos</button>
+                </div>
+            </div>
+            
+            <div class="section-header">
+                <h2>Últimas Noticias</h2>
+            </div>
+            <div id="view-inicio-noticias" class="cards-grid"></div>
 
-# Configuración de Supabase (toma las claves de tu archivo .env)
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+            <div class="section-header" style="margin-top: 40px;">
+                <h2>Últimos Artículos de Blog</h2>
+            </div>
+            <div id="view-inicio-blogs" class="cards-grid"></div>
+        </div>
 
-# NOMBRE DE CANAL FIJO DE TWITCH (Escribe aquí el canal oficial)
-TWITCH_CHANNEL = "tu_canal_de_twitch"
+        <!-- SECCIÓN 2: NOTICIAS -->
+        <div id="sec-noticias" class="wiki-section">
+            <div class="section-header">
+                <h2>📰 Noticias & Comunicados</h2>
+                <p>Novedades, anuncios de fichajes, actualizaciones y parches de juegos.</p>
+            </div>
+            <div id="view-noticias" class="cards-grid"></div>
+        </div>
 
-@app.route('/')
-def index():
-    return render_template('index.html', twitch_channel=TWITCH_CHANNEL)
+        <!-- SECCIÓN 3: BLOGS -->
+        <div id="sec-blogs" class="wiki-section">
+            <div class="section-header">
+                <h2>✍️ Blogs & Artículos de Opinión</h2>
+                <p>Análisis, guías, entrevistas y columnas escritas por la comunidad y el staff.</p>
+            </div>
+            <div id="view-blogs" class="cards-grid"></div>
+        </div>
 
-# --- RUTAS DE NOTICIAS ---
-@app.route('/api/noticias', methods=['GET', 'POST'])
-def handle_noticias():
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('noticias').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('noticias').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
+        <!-- SECCIÓN 4: ROSTER -->
+        <div id="sec-roster" class="wiki-section">
+            <div class="section-header">
+                <h2>🎮 Jugadores & Roster</h2>
+                <p>Conoce al talento que representa a la escuadra en cada disciplina.</p>
+            </div>
+            <div id="view-roster" class="cards-grid"></div>
+        </div>
 
-@app.route('/api/noticias/<int:noticia_id>', methods=['DELETE'])
-def delete_noticia(noticia_id):
-    res = supabase.table('noticias').delete().eq('id', noticia_id).execute()
-    return jsonify(res.data)
+        <!-- SECCIÓN 5: PARTIDOS -->
+        <div id="sec-partidos" class="wiki-section">
+            <div class="section-header">
+                <h2>⚔️ Calendario de Partidos y Resultados</h2>
+                <p>Fechas de torneos, horarios y puntuaciones de nuestras contiendas.</p>
+            </div>
+            <div id="view-partidos" class="updates-list"></div>
+        </div>
 
-# --- RUTAS DE BLOGS ---
-@app.route('/api/blogs', methods=['GET', 'POST'])
-def handle_blogs():
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('blogs').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('blogs').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
+        <!-- SECCIÓN 6: TRANSMISIÓN EN VIVO -->
+        <div id="sec-stream" class="wiki-section">
+            <div class="stream-header-box">
+                <div>
+                    <h2 id="stream-title">Canal Oficial del Equipo</h2>
+                    <p id="stream-status-text">Comprobando estado de la transmisión...</p>
+                </div>
+                <div id="stream-status-badge" class="badge-status offline">
+                    <span class="dot"></span> <span id="status-label">OFFLINE</span>
+                </div>
+            </div>
 
-@app.route('/api/blogs/<int:blog_id>', methods=['DELETE'])
-def delete_blog(blog_id):
-    res = supabase.table('blogs').delete().eq('id', blog_id).execute()
-    return jsonify(res.data)
+            <!-- CONTENEDOR EN VIVO (SE OCULTA SI ESTÁ OFFLINE) -->
+            <div id="stream-live-container" class="stream-container" style="display: none;">
+                <div id="twitch-embed" class="video-player-box"></div>
+                <div class="chat-box" id="chat-container">
+                    <iframe id="twitch-chat-iframe" src="" height="100%" width="100%" style="border:none;"></iframe>
+                </div>
+            </div>
 
-# --- RUTAS DE JUGADORES ---
-@app.route('/api/jugadores', methods=['GET', 'POST'])
-def handle_jugadores():
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('jugadores').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('jugadores').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
+            <!-- TARJETA CUANDO ESTÁ OFFLINE -->
+            <div id="stream-offline-card" class="panel" style="text-align: center; padding: 50px 20px;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">📺</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 10px;">El canal se encuentra fuera de línea</h3>
+                <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto;">En este momento no hay ninguna transmisión activa. Vuelve más tarde o consulta la agenda de partidos para conocer los próximos streams.</p>
+            </div>
+        </div>
+    </div>
 
-@app.route('/api/jugadores/<int:jugador_id>', methods=['DELETE'])
-def delete_jugador(jugador_id):
-    res = supabase.table('jugadores').delete().eq('id', jugador_id).execute()
-    return jsonify(res.data)
+    <script>
+        let currentChannel = "twitch";
+        let twitchEmbedPlayer = null;
 
-# --- RUTAS DE PARTIDOS ---
-@app.route('/api/partidos', methods=['GET', 'POST'])
-def handle_partidos():
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('partidos').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('partidos').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
+        function switchSection(secId) {
+            document.querySelectorAll('.wiki-section').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('sec-' + secId);
+            if (target) target.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-@app.route('/api/partidos/<int:partido_id>', methods=['DELETE'])
-def delete_partido(partido_id):
-    res = supabase.table('partidos').delete().eq('id', partido_id).execute()
-    return jsonify(res.data)
+            if(secId === 'stream') {
+                initTwitchPlayer(currentChannel);
+            }
+        }
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        document.addEventListener("DOMContentLoaded", () => {
+            loadNoticias();
+            loadBlogs();
+            loadRoster();
+            loadPartidos();
+            loadStreamConfig();
+        });
+
+        async function loadStreamConfig() {
+            try {
+                const res = await fetch('/api/stream_config');
+                const data = await res.json();
+                if(data && data.length > 0) {
+                    const cfg = data[0];
+                    currentChannel = cfg.canal_username || 'twitch';
+                    document.getElementById('stream-title').innerText = cfg.titulo || `Canal Oficial de ${currentChannel}`;
+                }
+                initTwitchPlayer(currentChannel);
+            } catch(e) {
+                initTwitchPlayer('twitch');
+            }
+        }
+
+        function initTwitchPlayer(channelName) {
+            const embedContainer = document.getElementById('twitch-embed');
+            if (!embedContainer) return;
+
+            embedContainer.innerHTML = '';
+
+            twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
+                width: "100%",
+                height: "100%",
+                channel: channelName,
+                parent: [window.location.hostname, "localhost", "127.0.0.1"]
+            });
+
+            const chatIframe = document.getElementById('twitch-chat-iframe');
+            if (chatIframe) {
+                chatIframe.src = `https://www.twitch.tv/embed/${channelName}/chat?parent=${window.location.hostname}&parent=localhost&parent=127.0.0.1`;
+            }
+
+            twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
+            twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
+        }
+
+        function setLiveStatus(isOnline) {
+            const badge = document.getElementById('stream-status-badge');
+            const label = document.getElementById('status-label');
+            const statusText = document.getElementById('stream-status-text');
+            const navDot = document.getElementById('nav-live-dot');
+            const liveContainer = document.getElementById('stream-live-container');
+            const offlineCard = document.getElementById('stream-offline-card');
+
+            if (isOnline) {
+                badge.className = "badge-status online";
+                label.innerText = "EN VIVO";
+                statusText.innerText = "🔴 ¡El equipo está transmitiendo ahora mismo!";
+                if(navDot) navDot.style.background = "#ef4444";
+                if(liveContainer) liveContainer.style.display = "grid";
+                if(offlineCard) offlineCard.style.display = "none";
+            } else {
+                badge.className = "badge-status offline";
+                label.innerText = "OFFLINE";
+                statusText.innerText = "⚪ El canal se encuentra fuera de línea por ahora.";
+                if(navDot) navDot.style.background = "#64748b";
+                if(liveContainer) liveContainer.style.display = "none";
+                if(offlineCard) offlineCard.style.display = "block";
+            }
+        }
+
+        async function loadNoticias() {
+            try {
+                const res = await fetch('/api/noticias');
+                const data = await res.json();
+                const cInicio = document.getElementById('view-inicio-noticias');
+                const cNoticias = document.getElementById('view-noticias');
+
+                if(!data || !data.length) {
+                    const emptyMsg = '<p class="empty">No hay noticias publicadas.</p>';
+                    if(cInicio) cInicio.innerHTML = emptyMsg;
+                    if(cNoticias) cNoticias.innerHTML = emptyMsg;
+                    return;
+                }
+
+                const html = data.map(n => `
+                    <div class="detail-card border-blue">
+                        <div class="card-img-wrapper">
+                            <img src="${n.imagen_url || 'https://via.placeholder.com/400x220?text=Noticia'}" alt="${n.titulo}">
+                        </div>
+                        <div class="card-body">
+                            <span class="version-tag">${n.categoria || 'NOTICIA'}</span>
+                            <h3>${n.titulo}</h3>
+                            <p class="description">${n.resumen || n.contenido || ''}</p>
+                            <small style="color:var(--text-muted); font-size:0.8rem; margin-top:auto;">Por: ${n.autor || 'Admin'}</small>
+                        </div>
+                    </div>
+                `).join('');
+
+                if(cInicio) cInicio.innerHTML = html;
+                if(cNoticias) cNoticias.innerHTML = html;
+            } catch(e) { console.error("Error cargando noticias:", e); }
+        }
+
+        async function loadBlogs() {
+            try {
+                const res = await fetch('/api/blogs');
+                const data = await res.json();
+                const cInicio = document.getElementById('view-inicio-blogs');
+                const cBlogs = document.getElementById('view-blogs');
+
+                if(!data || !data.length) {
+                    const emptyMsg = '<p class="empty">No hay artículos de blog publicados.</p>';
+                    if(cInicio) cInicio.innerHTML = emptyMsg;
+                    if(cBlogs) cBlogs.innerHTML = emptyMsg;
+                    return;
+                }
+
+                const html = data.map(b => `
+                    <div class="detail-card border-cyan">
+                        <div class="card-img-wrapper">
+                            <img src="${b.imagen_url || 'https://via.placeholder.com/400x220?text=Blog'}" alt="${b.titulo}">
+                        </div>
+                        <div class="card-body">
+                            <span class="version-tag" style="background:#0891b2;">${b.categoria || 'ARTÍCULO'}</span>
+                            <h3>${b.titulo}</h3>
+                            <p class="description">${b.resumen || b.contenido || ''}</p>
+                            <small style="color:var(--text-muted); font-size:0.8rem; margin-top:auto;">Escrito por: ${b.autor || 'Redacción'}</small>
+                        </div>
+                    </div>
+                `).join('');
+
+                if(cInicio) cInicio.innerHTML = html;
+                if(cBlogs) cBlogs.innerHTML = html;
+            } catch(e) { console.error("Error cargando blogs:", e); }
+        }
+
+        async function loadRoster() {
+            try {
+                const res = await fetch('/api/jugadores');
+                const data = await res.json();
+                const c = document.getElementById('view-roster');
+                if(!data || !data.length) return c.innerHTML = '<p class="empty">No hay jugadores registrados en el roster.</p>';
+                c.innerHTML = data.map(j => `
+                    <div class="detail-card border-cyan">
+                        <div class="card-img-wrapper">
+                            <img src="${j.imagen_url || 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
+                        </div>
+                        <div class="card-body">
+                            <h3>"${j.nickname}"</h3>
+                            <div class="info-badge">🎮 ${j.juego || 'Esports'} | Rol: ${j.rol || 'Jugador'}</div>
+                            <p class="description"><strong>Nombre Real:</strong> ${j.nombre_real || '-'}</p>
+                            ${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { console.error("Error cargando roster:", e); }
+        }
+
+        async function loadPartidos() {
+            try {
+                const res = await fetch('/api/partidos');
+                const data = await res.json();
+                const c = document.getElementById('view-partidos');
+                if(!data || !data.length) return c.innerHTML = '<p class="empty">No hay partidos registrados.</p>';
+                c.innerHTML = data.map(p => `
+                    <div class="update-full-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <span class="version-tag">${p.torneo || 'Torneo'}</span>
+                            <span class="info-badge">${p.fecha_hora || 'Por definir'}</span>
+                        </div>
+                        <h3 style="margin-top:15px; font-size:1.4rem;">VS ${p.rival}</h3>
+                        <p style="margin-top:10px; font-size:1rem; color:#cbd5e1;"><strong>Estado / Resultado:</strong> ${p.resultado || 'Pendiente'}</p>
+                    </div>
+                `).join('');
+            } catch(e) { console.error("Error cargando partidos:", e); }
+        }
+    </script>
+</body>
+</html>
