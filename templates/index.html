@@ -8,6 +8,17 @@
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <style>
         /* ==========================================
+           CONTROL OBLIGATORIO DE SECCIONES (NAVEGACIÓN)
+           ========================================== */
+        .wiki-section {
+            display: none !important;
+        }
+
+        .wiki-section.active {
+            display: block !important;
+        }
+
+        /* ==========================================
            REGLAS DE AUTO-AJUSTE UNIFORME DE IMÁGENES
            ========================================== */
         .card-img-wrapper {
@@ -479,7 +490,7 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 4: ROSTER POR DIVISIONES Y MENÚ LATERAL -->
+        <!-- SECCIÓN 4: ROSTER -->
         <div id="sec-roster" class="wiki-section">
             <div class="section-header">
                 <h2>🎮 Jugadores & Divisiones del Roster</h2>
@@ -514,7 +525,7 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 5: PARTIDOS DIVIDIDOS POR JUEGOS -->
+        <!-- SECCIÓN 5: PARTIDOS -->
         <div id="sec-partidos" class="wiki-section">
             <div class="section-header">
                 <h2>⚔️ Calendario de Partidos y Resultados</h2>
@@ -523,7 +534,7 @@
             <div id="view-partidos"></div>
         </div>
 
-        <!-- SECCIÓN 6: TRANSMISIÓN EN VIVO -->
+        <!-- SECCIÓN 6: TRANSMISIÓN -->
         <div id="sec-stream" class="wiki-section">
             <div class="stream-header-box">
                 <div>
@@ -623,9 +634,14 @@
         let currentPostId = null;
 
         function switchSection(secId) {
+            console.log("Cambiando a la sección:", secId);
             document.querySelectorAll('.wiki-section').forEach(el => el.classList.remove('active'));
             const target = document.getElementById('sec-' + secId);
-            if (target) target.classList.add('active');
+            if (target) {
+                target.classList.add('active');
+            } else {
+                console.error("No se encontró la sección con id: sec-" + secId);
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             if(secId === 'stream') {
@@ -634,6 +650,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            console.log("DOM Cargado correctamente.");
             loadNoticias();
             loadBlogs();
             loadRoster();
@@ -745,7 +762,7 @@
             const container = document.getElementById('view-noticias');
             if(!container) return;
             if(!items || !items.length) {
-                container.innerHTML = '<p class="empty">No hay noticias publicadas.</p>';
+                container.innerHTML = '<p class="empty">No hay noticias publicadas en este momento.</p>';
                 return;
             }
 
@@ -819,7 +836,7 @@
             const container = document.getElementById('view-blogs');
             if(!container) return;
             if(!items || !items.length) {
-                container.innerHTML = '<p class="empty">No hay artículos de blog publicados.</p>';
+                container.innerHTML = '<p class="empty">No hay artículos de blog publicados en este momento.</p>';
                 return;
             }
 
@@ -904,9 +921,6 @@
             renderBlogs(globalBlogs.filter(b => b.categoria === cat));
         }
 
-        /* ==========================================
-           AGRUPACIÓN DE ROSTER + MENÚ LATERAL
-           ========================================== */
         async function loadRoster() {
             try {
                 const res = await fetch('/api/jugadores');
@@ -995,9 +1009,6 @@
             renderRoster(globalRoster.filter(j => (j.juego || 'General').trim().toUpperCase() === game));
         }
 
-        /* ==========================================
-           PARTIDOS DIVIDIDOS POR JUEGO Y TORNEO
-           ========================================== */
         async function loadPartidos() {
             try {
                 const res = await fetch('/api/partidos');
@@ -1016,7 +1027,6 @@
                 return;
             }
 
-            // Agrupar partidos por juego/disciplina
             const juegos = {};
             items.forEach(p => {
                 const game = (p.juego || 'GENERAL / VARIOS').trim().toUpperCase();
@@ -1145,17 +1155,21 @@
             if (!embedContainer) return;
             embedContainer.innerHTML = '';
 
-            twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
-                width: "100%",
-                height: "100%",
-                channel: channelName,
-                layout: "video",
-                autoplay: true,
-                parent: [window.location.hostname, "localhost", "127.0.0.1"]
-            });
+            try {
+                twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
+                    width: "100%",
+                    height: "100%",
+                    channel: channelName,
+                    layout: "video",
+                    autoplay: true,
+                    parent: [window.location.hostname, "localhost", "127.0.0.1"]
+                });
 
-            twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
-            twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
+                twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
+                twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
+            } catch(err) {
+                console.warn("No se pudo iniciar el reproductor de Twitch:", err);
+            }
         }
 
         function setLiveStatus(isOnline) {
