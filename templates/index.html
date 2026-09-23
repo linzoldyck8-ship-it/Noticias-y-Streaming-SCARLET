@@ -3,10 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SCARLET ESPORT - PORTAL OFICIAL</title>
+    <title>SCARLET ESPORTS - PORTAL OFICIAL</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <style>
+        /* ==========================================
+           REGLAS DE AUTO-AJUSTE UNIFORME DE IMÁGENES
+           ========================================== */
+        .card-img-wrapper {
+            width: 100%;
+            height: 210px;
+            overflow: hidden;
+            position: relative;
+            background: #0f172a;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .card-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ajusta la imagen llenando el espacio sin deformarla */
+            object-position: center;
+            transition: transform 0.4s ease;
+        }
+
+        .detail-card:hover .card-img-wrapper img {
+            transform: scale(1.06);
+        }
+
+        /* Foto estilo retrato para Jugadores */
+        .player-img-wrapper {
+            height: 280px;
+        }
+
+        .player-img-wrapper img {
+            object-position: top center; /* Centra el enfoque en el rostro del jugador */
+        }
+
+        .popular-img {
+            width: 70px;
+            height: 55px;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        #modal-img {
+            width: 100%;
+            max-height: 420px;
+            object-fit: cover;
+            object-position: center;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        /* ==========================================
+           ESTILOS GENERALES Y MAQUETACIÓN DE DIVISIONES
+           ========================================== */
         .portal-layout {
             display: grid;
             grid-template-columns: 1fr 320px;
@@ -18,6 +73,31 @@
             .portal-layout {
                 grid-template-columns: 1fr;
             }
+        }
+
+        .division-block {
+            margin-bottom: 45px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .division-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+        }
+
+        .division-header h3 {
+            font-size: 1.5rem;
+            color: #38bdf8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
         }
 
         .sidebar-widget {
@@ -79,19 +159,13 @@
             cursor: pointer;
             padding-bottom: 12px;
             border-bottom: 1px dashed rgba(51, 65, 85, 0.5);
+            align-items: center;
         }
 
         .popular-item:last-child {
             border-bottom: none;
             margin-bottom: 0;
             padding-bottom: 0;
-        }
-
-        .popular-img {
-            width: 65px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 6px;
         }
 
         .popular-title {
@@ -118,7 +192,6 @@
             font-size: 0.85rem;
             font-weight: bold;
             cursor: pointer;
-            border: none;
         }
 
         .social-btn:hover { background: #3b82f6; color: #fff; }
@@ -171,7 +244,6 @@
             margin-top: 20px;
         }
 
-        /* FORMULARIO PÚBLICO EN MODAL */
         .public-form label {
             display: block;
             margin-top: 12px;
@@ -207,7 +279,6 @@
             font-weight: bold;
         }
 
-        /* SECCIÓN COMENTARIOS */
         .comments-section {
             margin-top: 40px;
             border-top: 1px solid #334155;
@@ -318,7 +389,7 @@
         <div id="sec-inicio" class="wiki-section active">
             <div class="hero-banner">
                 <h1>BIENVENIDOS AL PORTAL OFICIAL</h1>
-                <p>Acompáñanos en nuestro camino a la cima. Sigue nuestras partidas en vivo, noticias, blogs y conoce a nuestros jugadores.</p>
+                <p>Acompáñanos en nuestro camino a la cima. Sigue nuestras partidas en vivo, noticias, blogs y conoce a nuestras distintas divisiones.</p>
                 <div style="margin-top: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
                     <button class="btn-primary" style="width: auto; padding: 10px 20px;" onclick="switchSection('stream')">🔴 Ver Transmisión en Vivo</button>
                     <button class="nav-btn" onclick="switchSection('partidos')">📅 Próximos Partidos</button>
@@ -366,7 +437,7 @@
                         <h3>🌐 Redes Oficiales</h3>
                         <div class="social-links">
                             <a href="#" class="social-btn">Twitter / X</a>
-                            <a href="https://www.instagram.com/scarlet.esport?stkn=ZDNlZDc0MzIxNw==" class="social-btn">Instagram</a>
+                            <a href="https://www.instagram.com/scarlet.esport?stkn=ZDNlZDc0MzIxNw==" class="social-btn" target="_blank">Instagram</a>
                         </div>
                     </div>
                 </aside>
@@ -408,13 +479,13 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 4: ROSTER -->
+        <!-- SECCIÓN 4: ROSTER POR DIVISIONES -->
         <div id="sec-roster" class="wiki-section">
             <div class="section-header">
-                <h2>🎮 Jugadores & Roster</h2>
-                <p>Conoce al talento que representa a la escuadra en cada disciplina.</p>
+                <h2>🎮 Jugadores & Divisiones del Roster</h2>
+                <p>Conoce al talento que representa a SCARLET ESPORTS en cada disciplina.</p>
             </div>
-            <div id="view-roster" class="cards-grid"></div>
+            <div id="view-roster"></div>
         </div>
 
         <!-- SECCIÓN 5: PARTIDOS -->
@@ -457,7 +528,7 @@
             <div id="modal-header"></div>
             
             <div id="modal-video-container"></div>
-            <img id="modal-img" src="" alt="Portada" style="width:100%; max-height:400px; object-fit:cover; border-radius:8px; margin:20px 0;">
+            <img id="modal-img" src="" alt="Portada">
             
             <div id="modal-body" class="blog-body-text"></div>
 
@@ -542,11 +613,9 @@
             loadStreamConfig();
         });
 
-        /* FUNCIÓN AUXILIAR PARA FORMATO DE EMBED DE VIDEO */
         function formatVideoEmbed(url) {
             if (!url) return '';
 
-            // YouTube
             if (url.includes('youtube.com') || url.includes('youtu.be')) {
                 let videoId = '';
                 if (url.includes('youtu.be')) {
@@ -564,7 +633,6 @@
                 }
             }
 
-            // Vimeo
             if (url.includes('vimeo.com')) {
                 const videoId = url.split('/').pop();
                 if (videoId) {
@@ -574,7 +642,6 @@
                 }
             }
 
-            // Video Directo / MP4 / WebM
             return `<video controls style="width:100%; max-height:400px; border-radius:8px; margin:20px 0; background:#000;">
                 <source src="${url}">Tu navegador no soporta el reproductor de video.
             </video>`;
@@ -809,6 +876,62 @@
             renderBlogs(globalBlogs.filter(b => b.categoria === cat));
         }
 
+        /* ==========================================
+           AGRUPACIÓN DINÁMICA DE ROSTER POR DIVISIÓN
+           ========================================== */
+        async function loadRoster() {
+            try {
+                const res = await fetch('/api/jugadores');
+                const data = await res.json();
+                const container = document.getElementById('view-roster');
+                if(!container) return;
+
+                if(!data || !data.length) {
+                    container.innerHTML = '<p class="empty">No hay jugadores registrados en el roster.</p>';
+                    return;
+                }
+
+                // Agrupar jugadores por disciplina/juego
+                const divisiones = {};
+                data.forEach(j => {
+                    const game = (j.juego || 'General / Varios').trim().toUpperCase();
+                    if (!divisiones[game]) {
+                        divisiones[game] = [];
+                    }
+                    divisiones[game].push(j);
+                });
+
+                // Generar HTML por cada División
+                let html = '';
+                for (const [nombreDivision, jugadores] of Object.entries(divisiones)) {
+                    html += `
+                        <div class="division-block">
+                            <div class="division-header">
+                                <h3>⚔️ DIVISIÓN ${nombreDivision}</h3>
+                            </div>
+                            <div class="cards-grid">
+                                ${jugadores.map(j => `
+                                    <div class="detail-card border-cyan">
+                                        <div class="card-img-wrapper player-img-wrapper">
+                                            <img src="${j.imagen_url || 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
+                                        </div>
+                                        <div class="card-body">
+                                            <h3>"${j.nickname}"</h3>
+                                            <div class="info-badge">Rol: ${j.rol || 'Jugador'}</div>
+                                            <p class="description" style="margin-top:8px;"><strong>Nombre:</strong> ${j.nombre_real || '-'}</p>
+                                            ${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            } catch(e) { console.error("Error cargando roster:", e); }
+        }
+
         function openReaderModal(type, id) {
             currentPostType = type;
             currentPostId = id;
@@ -940,28 +1063,6 @@
                 if(liveContainer) liveContainer.style.display = "none";
                 if(offlineCard) offlineCard.style.display = "block";
             }
-        }
-
-        async function loadRoster() {
-            try {
-                const res = await fetch('/api/jugadores');
-                const data = await res.json();
-                const c = document.getElementById('view-roster');
-                if(!data || !data.length) return c.innerHTML = '<p class="empty">No hay jugadores registrados en el roster.</p>';
-                c.innerHTML = data.map(j => `
-                    <div class="detail-card border-cyan">
-                        <div class="card-img-wrapper">
-                            <img src="${j.imagen_url || 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
-                        </div>
-                        <div class="card-body">
-                            <h3>"${j.nickname}"</h3>
-                            <div class="info-badge">🎮 ${j.juego || 'Esports'} | Rol: ${j.rol || 'Jugador'}</div>
-                            <p class="description"><strong>Nombre Real:</strong> ${j.nombre_real || '-'}</p>
-                            ${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
-                        </div>
-                    </div>
-                `).join('');
-            } catch(e) { console.error("Error cargando roster:", e); }
         }
 
         async function loadPartidos() {
