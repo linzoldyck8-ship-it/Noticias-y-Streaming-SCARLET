@@ -492,3 +492,63 @@ textarea { resize: vertical; min-height: 100px; }
 
 .btn-danger:hover { background: #b91c1c; }
 .empty { color: var(--text-muted); font-style: italic; font-size: 0.9rem; }
+
+/* ==========================================
+   ESTILOS DE FONDO PERSONALIZADOS POR SECCIÓN
+   ========================================== */
+
+/* Estilos de imagen y filtros generales */
+.wiki-section, .tab-content {
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    position: relative;
+    border-radius: 8px;
+    padding: 25px;
+    overflow: hidden;
+}
+
+/* Capa oscura superior (overlay) para lecturas claras sobre cualquier imagen */
+.wiki-section::before, .tab-content::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(180deg, rgba(11, 14, 20, 0.88) 0%, rgba(11, 14, 20, 0.96) 100%);
+    z-index: 1;
+}
+
+/* Fuerza el contenido a colocarse por encima de la capa de fondo */
+.wiki-section > *, .tab-content > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* 1. Fondo Sección INICIO */
+#sec-inicio, #tab-inicio {
+    background-image: url('/static/images/bg-inicio.jpg');
+}
+
+/* 2. Fondo Sección NOTICIAS */
+#sec-noticias, #tab-noticias {
+    background-image: url('/static/images/bg-noticias.jpg');
+}
+
+/* 3. Fondo Sección BLOGS */
+#sec-blogs, #tab-blogs {
+    background-image: url('/static/images/bg-blogs.jpg');
+}
+
+/* 4. Fondo Sección ROSTER / JUGADORES */
+#sec-roster, #tab-roster, #sec-jugadores, #tab-jugadores {
+    background-image: url('/static/images/bg-roster.jpg');
+}
+
+/* 5. Fondo Sección PARTIDOS */
+#sec-partidos, #tab-partidos {
+    background-image: url('/static/images/bg-partidos.jpg');
+}
+
+/* 6. Fondo Sección TRANSMISIÓN */
+#sec-stream, #tab-stream, #tab-stream_config {
+    background-image: url('/static/images/bg-stream.jpg');
+}
