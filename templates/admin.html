@@ -1,187 +1,448 @@
-Aquí tienes la versión mejorada y corregida de los 3 archivos (app.py, index.html y admin_2.html).
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Esports Team</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .image-uploader-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed #334155;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .image-uploader-box label {
+            margin-top: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .upload-divider {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin: 6px 0;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <header class="top-nav">
+        <div class="logo"><a href="/admin">⚙️ PANEL ADMINISTRADOR ESPORTS</a></div>
+        <div style="display: flex; gap: 10px;">
+            <a href="/" class="nav-btn">Volver a la Web</a>
+            <a href="/logout" class="nav-btn" style="background: #ef4444; border-color: #dc2626;">Cerrar Sesión</a>
+        </div>
+    </header>
 
-Principales mejoras y correcciones realizadas:
-app.py:
+    <div class="container">
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="showTab(event, 'noticias')">📰 Noticias</button>
+            <button class="tab-btn" onclick="showTab(event, 'blogs')">✍️ Blogs & Artículos</button>
+            <button class="tab-btn" onclick="showTab(event, 'jugadores')">🎮 Jugadores / Roster</button>
+            <button class="tab-btn" onclick="showTab(event, 'partidos')">⚔️ Partidos y Resultados</button>
+            <button class="tab-btn" onclick="showTab(event, 'stream_config')">🔴 Configuración Canal Stream</button>
+        </div>
 
-Integración de comentarios y blogs públicos: Se permitió que la comunidad pueda enviar comentarios y crear entradas de blog sin requerir autenticación previa de administrador (evitando el error 401 Unauthorized).
+        <!-- NOTICIAS -->
+        <div id="tab-noticias" class="tab-content">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-noticias">Crear Nueva Noticia</h2>
+                    <form onsubmit="submitNoticia(event)">
+                        <input type="hidden" id="edit-id-noticias">
+                        <label>Título de la Noticia</label>
+                        <input type="text" id="n_t" placeholder="Ej: ¡Clasificamos a la Gran Final!" required>
+                        <label>Categoría</label>
+                        <input type="text" id="n_c" placeholder="Ej: Anuncio / Valorant / Fichaje" required>
+                        <label>Resumen Breve</label>
+                        <input type="text" id="n_r" placeholder="Breve descripción..." required>
+                        <label>Contenido / Detalle</label>
+                        <textarea id="n_co" placeholder="Texto completo de la noticia..."></textarea>
+                        <label>Autor</label>
+                        <input type="text" id="n_a" placeholder="Ej: Manager / Staff" required>
+                        
+                        <label>Imagen / Banner</label>
+                        <div class="image-uploader-box">
+                            <label>📁 Subir archivo desde dispositivo:</label>
+                            <input type="file" id="n_file" accept="image/*">
+                            <div class="upload-divider">— O TAMBIÉN PUEDES —</div>
+                            <label>🔗 Pegar URL de imagen:</label>
+                            <input type="url" id="n_i" placeholder="https://...">
+                        </div>
 
-Actualización del template admin: Se ajustó render_template('admin_2.html') para coincidir con el nombre del archivo.
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-noticias" class="btn-primary">Guardar Noticia</button>
+                            <button type="button" id="cancel-noticias" class="btn-danger" style="display:none;" onclick="resetForm('noticias')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Noticias Publicadas</h2>
+                    <div id="admin-noticias" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
 
-Endpoint dedicado de comentarios: Se añadió un filtro /api/comentarios por post_type y post_id para obtener y guardar comentarios en tiempo real desde Supabase.
+        <!-- BLOGS -->
+        <div id="tab-blogs" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-blogs">Crear Nuevo Artículo / Blog</h2>
+                    <form onsubmit="submitBlog(event)">
+                        <input type="hidden" id="edit-id-blogs">
+                        <label>Título del Artículo</label>
+                        <input type="text" id="b_t" placeholder="Ej: Análisis táctico del último parche" required>
+                        <label>Categoría / Tema</label>
+                        <input type="text" id="b_c" placeholder="Ej: Meta / Opinión / Guía" required>
+                        <label>Resumen Breve (Aparece en la portada)</label>
+                        <input type="text" id="b_r" placeholder="Un gancho corto para atraer lectores..." required>
+                        <label>Contenido Completo del Artículo</label>
+                        <textarea id="b_co" placeholder="Escribe la entrada completa del blog aquí..." style="min-height: 150px;"></textarea>
+                        <label>Autor / Escritor</label>
+                        <input type="text" id="b_a" placeholder="Ej: Coach / Redacción" required>
+                        
+                        <label>Imagen Destacada</label>
+                        <div class="image-uploader-box">
+                            <label>📁 Subir archivo desde dispositivo:</label>
+                            <input type="file" id="b_file" accept="image/*">
+                            <div class="upload-divider">— O TAMBIÉN PUEDES —</div>
+                            <label>🔗 Pegar URL de imagen:</label>
+                            <input type="url" id="b_i" placeholder="https://...">
+                        </div>
 
-index.html:
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-blogs" class="btn-primary">Guardar Artículo</button>
+                            <button type="button" id="cancel-blogs" class="btn-danger" style="display:none;" onclick="resetForm('blogs')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Artículos Publicados</h2>
+                    <div id="admin-blogs" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
 
-Comentarios persistentes en tiempo real: Los comentarios ya no se guardan en el localStorage local del navegador, sino que se sincronizan directamente con el backend/base de datos para que todos los usuarios puedan ver los mensajes.
+        <!-- JUGADORES / ROSTER -->
+        <div id="tab-jugadores" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-jugadores">Agregar Jugador al Roster</h2>
+                    <form onsubmit="submitJugador(event)">
+                        <input type="hidden" id="edit-id-jugadores">
+                        <label>Nickname / ID</label>
+                        <input type="text" id="j_nick" placeholder="Ej: Shadow99" required>
+                        <label>Nombre Real</label>
+                        <input type="text" id="j_real" placeholder="Ej: Carlos Mendoza">
+                        <label>Juego / Disciplina</label>
+                        <input type="text" id="j_game" placeholder="Ej: League of Legends / CS2 / Valorant" required>
+                        <label>Rol en el Equipo</label>
+                        <input type="text" id="j_rol" placeholder="Ej: IGL / Awper / Midlaner" required>
+                        <label>Redes Sociales (Twitter/IG/Twitch)</label>
+                        <input type="text" id="j_redes" placeholder="@usuario_twitter">
+                        
+                        <label>Foto del Jugador</label>
+                        <div class="image-uploader-box">
+                            <label>📁 Subir archivo desde dispositivo:</label>
+                            <input type="file" id="j_file" accept="image/*">
+                            <div class="upload-divider">— O TAMBIÉN PUEDES —</div>
+                            <label>🔗 Pegar URL de imagen:</label>
+                            <input type="url" id="j_i" placeholder="https://...">
+                        </div>
 
-Incrustación dinámica de Twitch: Se configuró la lista de dominios parent para que el reproductor de Twitch funcione correctamente tanto en entorno local (localhost) como en producción.
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-jugadores" class="btn-primary">Guardar Jugador</button>
+                            <button type="button" id="cancel-jugadores" class="btn-danger" style="display:none;" onclick="resetForm('jugadores')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Jugadores Registrados</h2>
+                    <div id="admin-jugadores" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
 
-Flujo de publicación de blogs de la comunidad: Corregido para refrescar y notificar correctamente al usuario al publicar un artículo.
+        <!-- PARTIDOS -->
+        <div id="tab-partidos" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2 id="title-partidos">Agregar Partido / Encuentro</h2>
+                    <form onsubmit="handleFormSubmit(event, 'partidos', {torneo: p_t.value, rival: p_r.value, fecha_hora: p_f.value, resultado: p_res.value})">
+                        <input type="hidden" id="edit-id-partidos">
+                        <label>Torneo / Liga</label>
+                        <input type="text" id="p_t" placeholder="Ej: Copa Challenger Semifinal" required>
+                        <label>Nombre del Rival / Equipo Enemigo</label>
+                        <input type="text" id="p_r" placeholder="Ej: Team Alpha Esports" required>
+                        <label>Fecha y Hora</label>
+                        <input type="text" id="p_f" placeholder="Ej: 28 Octubre - 20:00 HRS" required>
+                        <label>Estado / Resultado</label>
+                        <input type="text" id="p_res" placeholder="Ej: Victoria 2 - 1 / Pendiente" required>
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+                            <button type="submit" id="btn-partidos" class="btn-primary">Guardar Partido</button>
+                            <button type="button" id="cancel-partidos" class="btn-danger" style="display:none;" onclick="resetForm('partidos')">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Partidos Registrados</h2>
+                    <div id="admin-partidos" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
 
-admin_2.html:
+        <!-- CONFIGURACIÓN STREAM -->
+        <div id="tab-stream_config" class="tab-content" style="display:none;">
+            <div class="admin-grid">
+                <div class="panel">
+                    <h2>Configuración del Canal de Transmisión</h2>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Ingresa el usuario de Twitch oficial para vincular el reproductor en vivo.</p>
+                    <form onsubmit="handleFormSubmit(event, 'stream_config', {titulo: s_title.value, canal_username: s_channel.value})">
+                        <input type="hidden" id="edit-id-stream_config">
+                        <label>Título Personalizado de la Transmisión</label>
+                        <input type="text" id="s_title" placeholder="Ej: Transmisión Oficial - TEAM ESPORTS" required>
+                        <label>Nombre de Usuario de Twitch (Canal)</label>
+                        <input type="text" id="s_channel" placeholder="Ej: gaules / ibai / tu_canal" required>
+                        <button type="submit" id="btn-stream_config" class="btn-primary">Guardar Configuración de Stream</button>
+                    </form>
+                </div>
+                <div class="panel">
+                    <h2>Canal Configurado Actualmente</h2>
+                    <div id="admin-stream_config" class="admin-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-Gestión de formularios y edición completa: Se sincronizaron las funciones de edición (prepareEdit) y reinicio (resetForm) para todas las secciones (Noticias, Blogs, Jugadores, Partidos y Stream).
+    <script>
+        const store = {};
 
-Manejo de archivos y URLs: Optimización en la conversión Base64 de imágenes y validación en la interfaz.
+        function showTab(evt, name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
 
-1. app.py
-Python
-import os
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
-from functools import wraps
-from supabase import create_client, Client
+            const targetTab = document.getElementById('tab-' + name);
+            if (targetTab) {
+                targetTab.style.display = 'block';
+            }
 
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'clave_secreta_esports_team')
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            } else {
+                const activeBtn = document.querySelector(`.tab-btn[onclick*="'${name}'"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
 
-SUPABASE_URL = os.environ.get('SUPABASE_URL')
-SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+            localStorage.setItem('admin_active_tab', name);
+        }
 
-supabase: Client = None
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception as e:
-        print("Error al conectar con Supabase:", e)
+        async function processImageInput(fileInputId, urlInputId, existingValue = '') {
+            const fileInput = document.getElementById(fileInputId);
+            const urlInput = document.getElementById(urlInputId);
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('logged_in'):
-            return jsonify({'error': 'No autorizado. Inicia sesión nuevamente.'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = err => reject(err);
+                    reader.readAsDataURL(fileInput.files[0]);
+                });
+            } else if (urlInput && urlInput.value.trim() !== '') {
+                return urlInput.value.trim();
+            }
+            return existingValue;
+        }
 
-# --- VISTAS / PÁGINAS ---
-@app.route('/')
-def index():
-    noticias = []
-    blogs = []
-    if supabase:
-        try:
-            res_n = supabase.table('noticias').select('*').order('creado_en', desc=True).execute()
-            noticias = res_n.data if res_n.data else []
-        except Exception as e:
-            print("Error cargando noticias en inicio:", e)
-        try:
-            res_b = supabase.table('blogs').select('*').order('creado_en', desc=True).execute()
-            blogs = res_b.data if res_b.data else []
-        except Exception as e:
-            print("Error cargando blogs en inicio:", e)
-    return render_template('index.html', noticias=noticias, blogs=blogs)
+        async function submitNoticia(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id-noticias').value;
+            const existingImg = editId && store.noticias ? (store.noticias.find(x => x.id == editId) || {}).imagen_url : '';
+            const imgUrl = await processImageInput('n_file', 'n_i', existingImg);
 
-@app.route('/admin')
-def admin():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    return render_template('admin_2.html')
+            if (!imgUrl) {
+                alert("Debes seleccionar una imagen desde tu dispositivo o ingresar una URL.");
+                return;
+            }
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        password = (
-            request.form.get('password') or 
-            request.form.get('clave') or 
-            request.form.get('contrasena') or 
-            request.form.get('pass')
-        )
-        
-        ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
-        PASSWORD_DEFECTO = 'admin123'
+            const data = {
+                titulo: n_t.value,
+                categoria: n_c.value,
+                resumen: n_r.value,
+                contenido: n_co.value,
+                autor: n_a.value,
+                imagen_url: imgUrl
+            };
+            handleFormSubmit(e, 'noticias', data);
+        }
 
-        if password and (password == ADMIN_PASSWORD or password == PASSWORD_DEFECTO):
-            session['logged_in'] = True
-            return redirect(url_for('admin'))
+        async function submitBlog(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id-blogs').value;
+            const existingImg = editId && store.blogs ? (store.blogs.find(x => x.id == editId) || {}).imagen_url : '';
+            const imgUrl = await processImageInput('b_file', 'b_i', existingImg);
+
+            if (!imgUrl) {
+                alert("Debes seleccionar una imagen desde tu dispositivo o ingresar una URL.");
+                return;
+            }
+
+            const data = {
+                titulo: b_t.value,
+                categoria: b_c.value,
+                resumen: b_r.value,
+                contenido: b_co.value,
+                autor: b_a.value,
+                imagen_url: imgUrl
+            };
+            handleFormSubmit(e, 'blogs', data);
+        }
+
+        async function submitJugador(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id-jugadores').value;
+            const existingImg = editId && store.jugadores ? (store.jugadores.find(x => x.id == editId) || {}).imagen_url : '';
+            const imgUrl = await processImageInput('j_file', 'j_i', existingImg);
+
+            if (!imgUrl) {
+                alert("Debes seleccionar una imagen desde tu dispositivo o ingresar una URL.");
+                return;
+            }
+
+            const data = {
+                nickname: j_nick.value,
+                nombre_real: j_real.value,
+                juego: j_game.value,
+                rol: j_rol.value,
+                redes: j_redes.value,
+                imagen_url: imgUrl
+            };
+            handleFormSubmit(e, 'jugadores', data);
+        }
+
+        async function handleFormSubmit(e, cat, data) {
+            if(e) e.preventDefault();
+            const editId = document.getElementById(`edit-id-${cat}`).value;
+            const url = editId ? `/api/${cat}/${editId}` : `/api/${cat}`;
+            const method = editId ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const resData = await response.json();
+                
+                if(!response.ok) {
+                    alert("Error guardando en la base de datos: " + (resData.error || "Verifica la configuración."));
+                    return;
+                }
+                window.location.reload();
+            } catch(err) {
+                alert("Error de conexión al guardar: " + err);
+            }
+        }
+
+        function prepareEdit(cat, id) {
+            const item = store[cat].find(x => x.id == id);
+            if (!item) return;
+
+            document.getElementById(`edit-id-${cat}`).value = item.id;
+            const titleElem = document.getElementById(`title-${cat}`);
+            if (titleElem) titleElem.innerText = "✏️ Modificar Elemento";
             
-        return render_template('login.html', error='Contraseña incorrecta')
-        
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('logged_in', None)
-    return redirect(url_for('login'))
-
-# --- API CRUD UNIFICADA PARA ESPORTS Y BLOGS ---
-TABLAS_PERMITIDAS = ['noticias', 'blogs', 'jugadores', 'partidos', 'stream_config', 'comentarios']
-
-@app.route('/api/comentarios', methods=['GET'])
-def get_comentarios():
-    if not supabase:
-        return jsonify([])
-    try:
-        post_type = request.args.get('post_type')
-        post_id = request.args.get('post_id')
-        
-        query = supabase.table('comentarios').select('*')
-        if post_type and post_id:
-            query = query.eq('post_type', post_type).eq('post_id', str(post_id))
+            const btnElem = document.getElementById(`btn-${cat}`);
+            if (btnElem) btnElem.innerText = "Actualizar Cambios";
             
-        res = query.order('creado_en', desc=True).execute()
-        return jsonify(res.data if res.data else [])
-    except Exception as e:
-        print("Error al obtener comentarios:", e)
-        return jsonify([]), 500
+            if(document.getElementById(`cancel-${cat}`)) {
+                document.getElementById(`cancel-${cat}`).style.display = 'inline-block';
+            }
 
-@app.route('/api/<tabla>', methods=['GET'])
-def get_items(tabla):
-    if tabla not in TABLAS_PERMITIDAS:
-        return jsonify({'error': 'Tabla no válida'}), 400
-    if not supabase:
-        return jsonify([])
-    try:
-        res = supabase.table(tabla).select('*').execute()
-        return jsonify(res.data if res.data else [])
-    except Exception as e:
-        print(f"Error al obtener {tabla}:", e)
-        return jsonify([]), 500
+            if (cat === 'noticias') {
+                n_t.value = item.titulo || '';
+                n_c.value = item.categoria || '';
+                n_r.value = item.resumen || '';
+                n_co.value = item.contenido || '';
+                n_a.value = item.autor || '';
+                n_i.value = item.imagen_url || '';
+            } else if (cat === 'blogs') {
+                b_t.value = item.titulo || '';
+                b_c.value = item.categoria || '';
+                b_r.value = item.resumen || '';
+                b_co.value = item.contenido || '';
+                b_a.value = item.autor || '';
+                b_i.value = item.imagen_url || '';
+            } else if (cat === 'jugadores') {
+                j_nick.value = item.nickname || '';
+                j_real.value = item.nombre_real || '';
+                j_game.value = item.juego || '';
+                j_rol.value = item.rol || '';
+                j_redes.value = item.redes || '';
+                j_i.value = item.imagen_url || '';
+            } else if (cat === 'partidos') {
+                p_t.value = item.torneo || '';
+                p_r.value = item.rival || '';
+                p_f.value = item.fecha_hora || '';
+                p_res.value = item.resultado || '';
+            } else if (cat === 'stream_config') {
+                s_title.value = item.titulo || '';
+                s_channel.value = item.canal_username || '';
+            }
 
-@app.route('/api/<tabla>', methods=['POST'])
-def create_item(tabla):
-    if tabla not in TABLAS_PERMITIDAS:
-        return jsonify({'error': 'Tabla no válida'}), 400
-    if not supabase:
-        return jsonify({'error': 'Base de datos no conectada'}), 500
-    
-    # Permitir publicaciones públicas de la comunidad para comentarios y blogs
-    if tabla not in ['comentarios', 'blogs'] and not session.get('logged_in'):
-        return jsonify({'error': 'No autorizado. Inicia sesión nuevamente.'}), 401
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-    try:
-        data = request.get_json()
-        res = supabase.table(tabla).insert(data).execute()
-        return jsonify({'status': 'created', 'data': res.data})
-    except Exception as e:
-        print(f"Error al crear en {tabla}:", e)
-        return jsonify({'error': str(e)}), 500
+        function resetForm(cat) {
+            document.getElementById(`edit-id-${cat}`).value = "";
+            const titleElem = document.getElementById(`title-${cat}`);
+            if (titleElem) titleElem.innerText = "Añadir Elemento";
+            
+            const btnElem = document.getElementById(`btn-${cat}`);
+            if (btnElem) btnElem.innerText = "Guardar";
+            
+            if(document.getElementById(`cancel-${cat}`)) {
+                document.getElementById(`cancel-${cat}`).style.display = 'none';
+            }
+        }
 
-@app.route('/api/<tabla>/<id>', methods=['PUT'])
-@admin_required
-def update_item(tabla, id):
-    if tabla not in TABLAS_PERMITIDAS:
-        return jsonify({'error': 'Tabla no válida'}), 400
-    if not supabase:
-        return jsonify({'error': 'Base de datos no conectada'}), 500
-    try:
-        data = request.get_json()
-        res = supabase.table(tabla).update(data).eq('id', id).execute()
-        return jsonify({'status': 'updated', 'data': res.data})
-    except Exception as e:
-        print(f"Error al actualizar {tabla}:", e)
-        return jsonify({'error': str(e)}), 500
+        async function removeItem(cat, id) {
+            if(confirm('¿Deseas eliminar este registro?')) {
+                await fetch(`/api/${cat}/${id}`, { method: 'DELETE' });
+                window.location.reload();
+            }
+        }
 
-@app.route('/api/<tabla>/<id>', methods=['DELETE'])
-@admin_required
-def delete_item(tabla, id):
-    if tabla not in TABLAS_PERMITIDAS:
-        return jsonify({'error': 'Tabla no válida'}), 400
-    if not supabase:
-        return jsonify({'error': 'Base de datos no conectada'}), 500
-    try:
-        res = supabase.table(tabla).delete().eq('id', id).execute()
-        return jsonify({'status': 'deleted', 'data': res.data})
-    except Exception as e:
-        print(f"Error al eliminar de {tabla}:", e)
-        return jsonify({'error': str(e)}), 500
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedTab = localStorage.getItem('admin_active_tab') || 'noticias';
+            showTab(null, savedTab);
 
-if __name__ == '__main__':
-    app.run(debug=True)
+            loadList('noticias', item => `<b>[${item.categoria || 'NOTICIA'}]</b> ${item.titulo}`);
+            loadList('blogs', item => `<b>[${item.categoria || 'BLOG'}]</b> ${item.titulo}`);
+            loadList('jugadores', item => `<b>${item.nickname}</b> (${item.juego})`);
+            loadList('partidos', item => `<b>VS ${item.rival}</b> - ${item.torneo}`);
+            loadList('stream_config', item => `<b>Canal:</b> ${item.canal_username}`);
+        });
+
+        async function loadList(cat, formatText) {
+            const res = await fetch(`/api/${cat}`);
+            const items = await res.json();
+            store[cat] = items;
+            const el = document.getElementById(`admin-${cat}`);
+            if(!items || !items.length) return el.innerHTML = '<p class="empty">Sin registros.</p>';
+            
+            el.innerHTML = items.map(item => `
+                <div class="admin-item" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <div>${formatText(item)}</div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn-primary" style="padding:4px 10px; font-size:0.8rem;" onclick="prepareEdit('${cat}', '${item.id}')">✏️ Editar</button>
+                        <button class="btn-danger" style="padding:4px 10px; font-size:0.8rem;" onclick="removeItem('${cat}', '${item.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
