@@ -23,7 +23,7 @@
         .card-img-wrapper img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Ajusta la imagen llenando el espacio sin deformarla */
+            object-fit: cover;
             object-position: center;
             transition: transform 0.4s ease;
         }
@@ -38,7 +38,7 @@
         }
 
         .player-img-wrapper img {
-            object-position: top center; /* Centra el enfoque en el rostro del jugador */
+            object-position: top center;
         }
 
         .popular-img {
@@ -76,7 +76,7 @@
         }
 
         .division-block {
-            margin-bottom: 45px;
+            margin-bottom: 40px;
             background: rgba(15, 23, 42, 0.4);
             border: 1px solid rgba(51, 65, 85, 0.5);
             border-radius: 12px;
@@ -93,7 +93,7 @@
         }
 
         .division-header h3 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: #38bdf8;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -109,7 +109,7 @@
         }
 
         .sidebar-widget h3 {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             color: #38bdf8;
             margin-bottom: 15px;
             border-bottom: 1px solid #334155;
@@ -479,22 +479,48 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 4: ROSTER POR DIVISIONES -->
+        <!-- SECCIÓN 4: ROSTER POR DIVISIONES Y MENÚ LATERAL -->
         <div id="sec-roster" class="wiki-section">
             <div class="section-header">
                 <h2>🎮 Jugadores & Divisiones del Roster</h2>
                 <p>Conoce al talento que representa a SCARLET ESPORTS en cada disciplina.</p>
             </div>
-            <div id="view-roster"></div>
+
+            <div class="portal-layout">
+                <div id="view-roster"></div>
+
+                <aside class="sidebar">
+                    <div class="sidebar-widget">
+                        <h3>🔍 Buscar Jugador</h3>
+                        <input type="text" id="search-roster" class="search-input" placeholder="Buscar por nickname..." onkeyup="filterRoster()">
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <h3>🎮 Divisiones / Juegos</h3>
+                        <div id="categories-roster" class="category-pills"></div>
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <h3>🌟 Jugadores Destacados</h3>
+                        <div id="featured-roster"></div>
+                    </div>
+
+                    <div class="sidebar-widget">
+                        <h3>📩 Únete al Equipo</h3>
+                        <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:12px;">¿Tienes el nivel para competir con SCARLET ESPORTS?</p>
+                        <button class="social-btn" style="display:block; width:100%; background: #0284c7; color:#fff;" onclick="alert('Contacta con la directiva a través de nuestras redes sociales oficiales.')">📩 Postular al Roster</button>
+                    </div>
+                </aside>
+            </div>
         </div>
 
-        <!-- SECCIÓN 5: PARTIDOS -->
+        <!-- SECCIÓN 5: PARTIDOS DIVIDIDOS POR JUEGOS -->
         <div id="sec-partidos" class="wiki-section">
             <div class="section-header">
                 <h2>⚔️ Calendario de Partidos y Resultados</h2>
-                <p>Fechas de torneos, horarios y puntuaciones de nuestras contiendas.</p>
+                <p>Fechas de torneos, horarios y puntuaciones organizadas por cada disciplina competitiva.</p>
             </div>
-            <div id="view-partidos" class="updates-list"></div>
+            <div id="view-partidos"></div>
         </div>
 
         <!-- SECCIÓN 6: TRANSMISIÓN EN VIVO -->
@@ -591,6 +617,8 @@
         let twitchEmbedPlayer = null;
         let globalNoticias = [];
         let globalBlogs = [];
+        let globalRoster = [];
+        let globalPartidos = [];
         let currentPostType = '';
         let currentPostId = null;
 
@@ -877,59 +905,150 @@
         }
 
         /* ==========================================
-           AGRUPACIÓN DINÁMICA DE ROSTER POR DIVISIÓN
+           AGRUPACIÓN DE ROSTER + MENÚ LATERAL
            ========================================== */
         async function loadRoster() {
             try {
                 const res = await fetch('/api/jugadores');
                 const data = await res.json();
-                const container = document.getElementById('view-roster');
-                if(!container) return;
-
-                if(!data || !data.length) {
-                    container.innerHTML = '<p class="empty">No hay jugadores registrados en el roster.</p>';
-                    return;
-                }
-
-                // Agrupar jugadores por disciplina/juego
-                const divisiones = {};
-                data.forEach(j => {
-                    const game = (j.juego || 'General / Varios').trim().toUpperCase();
-                    if (!divisiones[game]) {
-                        divisiones[game] = [];
-                    }
-                    divisiones[game].push(j);
-                });
-
-                // Generar HTML por cada División
-                let html = '';
-                for (const [nombreDivision, jugadores] of Object.entries(divisiones)) {
-                    html += `
-                        <div class="division-block">
-                            <div class="division-header">
-                                <h3>⚔️ DIVISIÓN ${nombreDivision}</h3>
-                            </div>
-                            <div class="cards-grid">
-                                ${jugadores.map(j => `
-                                    <div class="detail-card border-cyan">
-                                        <div class="card-img-wrapper player-img-wrapper">
-                                            <img src="${j.imagen_url || 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
-                                        </div>
-                                        <div class="card-body">
-                                            <h3>"${j.nickname}"</h3>
-                                            <div class="info-badge">Rol: ${j.rol || 'Jugador'}</div>
-                                            <p class="description" style="margin-top:8px;"><strong>Nombre:</strong> ${j.nombre_real || '-'}</p>
-                                            ${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                container.innerHTML = html;
+                globalRoster = data || [];
+                renderRoster(globalRoster);
+                renderSidebarRoster(globalRoster);
             } catch(e) { console.error("Error cargando roster:", e); }
+        }
+
+        function renderRoster(items) {
+            const container = document.getElementById('view-roster');
+            if(!container) return;
+
+            if(!items || !items.length) {
+                container.innerHTML = '<p class="empty">No hay jugadores registrados en el roster.</p>';
+                return;
+            }
+
+            const divisiones = {};
+            items.forEach(j => {
+                const game = (j.juego || 'General / Varios').trim().toUpperCase();
+                if (!divisiones[game]) divisiones[game] = [];
+                divisiones[game].push(j);
+            });
+
+            let html = '';
+            for (const [nombreDivision, jugadores] of Object.entries(divisiones)) {
+                html += `
+                    <div class="division-block">
+                        <div class="division-header">
+                            <h3>⚔️ DIVISIÓN ${nombreDivision}</h3>
+                        </div>
+                        <div class="cards-grid">
+                            ${jugadores.map(j => `
+                                <div class="detail-card border-cyan">
+                                    <div class="card-img-wrapper player-img-wrapper">
+                                        <img src="${j.imagen_url || 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
+                                    </div>
+                                    <div class="card-body">
+                                        <h3>"${j.nickname}"</h3>
+                                        <div class="info-badge">Rol: ${j.rol || 'Jugador'}</div>
+                                        <p class="description" style="margin-top:8px;"><strong>Nombre:</strong> ${j.nombre_real || '-'}</p>
+                                        ${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderSidebarRoster(items) {
+            const games = ['Todas', ...new Set(items.map(i => (i.juego || 'General').trim().toUpperCase()).filter(Boolean))];
+            const catBox = document.getElementById('categories-roster');
+            if(catBox) {
+                catBox.innerHTML = games.map(g => `<span class="cat-pill" onclick="filterRosterByGame('${g}')">${g}</span>`).join('');
+            }
+
+            const featBox = document.getElementById('featured-roster');
+            if(featBox) {
+                featBox.innerHTML = items.slice(0, 4).map(j => `
+                    <div class="popular-item">
+                        <img class="popular-img" src="${j.imagen_url || 'https://via.placeholder.com/100?text=Player'}" alt="${j.nickname}">
+                        <div>
+                            <div class="popular-title">"${j.nickname}"</div>
+                            <small style="color:#38bdf8; font-size:0.75rem;">${j.juego || 'Esports'} - ${j.rol || 'Jugador'}</small>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filterRoster() {
+            const query = document.getElementById('search-roster').value.toLowerCase();
+            renderRoster(globalRoster.filter(j => 
+                j.nickname.toLowerCase().includes(query) || 
+                (j.nombre_real && j.nombre_real.toLowerCase().includes(query)) ||
+                (j.rol && j.rol.toLowerCase().includes(query))
+            ));
+        }
+
+        function filterRosterByGame(game) {
+            if(game === 'Todas') return renderRoster(globalRoster);
+            renderRoster(globalRoster.filter(j => (j.juego || 'General').trim().toUpperCase() === game));
+        }
+
+        /* ==========================================
+           PARTIDOS DIVIDIDOS POR JUEGO Y TORNEO
+           ========================================== */
+        async function loadPartidos() {
+            try {
+                const res = await fetch('/api/partidos');
+                const data = await res.json();
+                globalPartidos = data || [];
+                renderPartidos(globalPartidos);
+            } catch(e) { console.error("Error cargando partidos:", e); }
+        }
+
+        function renderPartidos(items) {
+            const container = document.getElementById('view-partidos');
+            if(!container) return;
+
+            if(!items || !items.length) {
+                container.innerHTML = '<p class="empty">No hay partidos registrados en el calendario.</p>';
+                return;
+            }
+
+            // Agrupar partidos por juego/disciplina
+            const juegos = {};
+            items.forEach(p => {
+                const game = (p.juego || 'GENERAL / VARIOS').trim().toUpperCase();
+                if (!juegos[game]) juegos[game] = [];
+                juegos[game].push(p);
+            });
+
+            let html = '';
+            for (const [nombreJuego, partidos] of Object.entries(juegos)) {
+                html += `
+                    <div class="division-block">
+                        <div class="division-header">
+                            <h3>⚔️ PARTIDOS DE ${nombreJuego}</h3>
+                        </div>
+                        <div class="updates-list">
+                            ${partidos.map(p => `
+                                <div class="update-full-card">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                                        <span class="version-tag">${p.torneo || 'Torneo'}</span>
+                                        <span class="info-badge">${p.fecha_hora || 'Por definir'}</span>
+                                    </div>
+                                    <h3 style="margin-top:15px; font-size:1.4rem;">VS ${p.rival}</h3>
+                                    <p style="margin-top:10px; font-size:1rem; color:#cbd5e1;"><strong>Estado / Resultado:</strong> ${p.resultado || 'Pendiente'}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
         }
 
         function openReaderModal(type, id) {
@@ -1063,25 +1182,6 @@
                 if(liveContainer) liveContainer.style.display = "none";
                 if(offlineCard) offlineCard.style.display = "block";
             }
-        }
-
-        async function loadPartidos() {
-            try {
-                const res = await fetch('/api/partidos');
-                const data = await res.json();
-                const c = document.getElementById('view-partidos');
-                if(!data || !data.length) return c.innerHTML = '<p class="empty">No hay partidos registrados.</p>';
-                c.innerHTML = data.map(p => `
-                    <div class="update-full-card">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                            <span class="version-tag">${p.torneo || 'Torneo'}</span>
-                            <span class="info-badge">${p.fecha_hora || 'Por definir'}</span>
-                        </div>
-                        <h3 style="margin-top:15px; font-size:1.4rem;">VS ${p.rival}</h3>
-                        <p style="margin-top:10px; font-size:1rem; color:#cbd5e1;"><strong>Estado / Resultado:</strong> ${p.resultado || 'Pendiente'}</p>
-                    </div>
-                `).join('');
-            } catch(e) { console.error("Error cargando partidos:", e); }
         }
     </script>
 </body>
