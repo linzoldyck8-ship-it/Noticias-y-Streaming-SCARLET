@@ -1,30 +1,3 @@
-Aquí tienes la versión mejorada y corregida de los 3 archivos (app.py, index.html y admin_2.html).
-
-Principales mejoras y correcciones realizadas:
-app.py:
-
-Integración de comentarios y blogs públicos: Se permitió que la comunidad pueda enviar comentarios y crear entradas de blog sin requerir autenticación previa de administrador (evitando el error 401 Unauthorized).
-
-Actualización del template admin: Se ajustó render_template('admin_2.html') para coincidir con el nombre del archivo.
-
-Endpoint dedicado de comentarios: Se añadió un filtro /api/comentarios por post_type y post_id para obtener y guardar comentarios en tiempo real desde Supabase.
-
-index.html:
-
-Comentarios persistentes en tiempo real: Los comentarios ya no se guardan en el localStorage local del navegador, sino que se sincronizan directamente con el backend/base de datos para que todos los usuarios puedan ver los mensajes.
-
-Incrustación dinámica de Twitch: Se configuró la lista de dominios parent para que el reproductor de Twitch funcione correctamente tanto en entorno local (localhost) como en producción.
-
-Flujo de publicación de blogs de la comunidad: Corregido para refrescar y notificar correctamente al usuario al publicar un artículo.
-
-admin_2.html:
-
-Gestión de formularios y edición completa: Se sincronizaron las funciones de edición (prepareEdit) y reinicio (resetForm) para todas las secciones (Noticias, Blogs, Jugadores, Partidos y Stream).
-
-Manejo de archivos y URLs: Optimización en la conversión Base64 de imágenes y validación en la interfaz.
-
-1. app.py
-Python
 import os
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from functools import wraps
