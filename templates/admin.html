@@ -143,8 +143,8 @@
                         <input type="text" id="j_nick" placeholder="Ej: Shadow99" required>
                         <label>Nombre Real</label>
                         <input type="text" id="j_real" placeholder="Ej: Carlos Mendoza">
-                        <label>Juego / Disciplina</label>
-                        <input type="text" id="j_game" placeholder="Ej: League of Legends / CS2 / Valorant" required>
+                        <label>División / Juego (Define el grupo en la web)</label>
+                        <input type="text" id="j_game" placeholder="Ej: VALORANT, LEAGUE OF LEGENDS, CS2..." required>
                         <label>Rol en el Equipo</label>
                         <input type="text" id="j_rol" placeholder="Ej: IGL / Awper / Midlaner" required>
                         <label>Redes Sociales (Twitter/IG/Twitch)</label>
@@ -177,8 +177,10 @@
             <div class="admin-grid">
                 <div class="panel">
                     <h2 id="title-partidos">Agregar Partido / Encuentro</h2>
-                    <form onsubmit="handleFormSubmit(event, 'partidos', {torneo: p_t.value, rival: p_r.value, fecha_hora: p_f.value, resultado: p_res.value})">
+                    <form onsubmit="handleFormSubmit(event, 'partidos', {juego: p_j.value, torneo: p_t.value, rival: p_r.value, fecha_hora: p_f.value, resultado: p_res.value})">
                         <input type="hidden" id="edit-id-partidos">
+                        <label>Juego / Disciplina</label>
+                        <input type="text" id="p_j" placeholder="Ej: VALORANT, LEAGUE OF LEGENDS, CS2..." required>
                         <label>Torneo / Liga</label>
                         <input type="text" id="p_t" placeholder="Ej: Copa Challenger Semifinal" required>
                         <label>Nombre del Rival / Equipo Enemigo</label>
@@ -389,6 +391,7 @@
                 j_redes.value = item.redes || '';
                 j_i.value = item.imagen_url || '';
             } else if (cat === 'partidos') {
+                p_j.value = item.juego || '';
                 p_t.value = item.torneo || '';
                 p_r.value = item.rival || '';
                 p_f.value = item.fecha_hora || '';
@@ -421,7 +424,7 @@
             loadList('noticias', item => `<b>[${item.categoria || 'NOTICIA'}]</b> ${item.titulo}`);
             loadList('blogs', item => `<b>[${item.categoria || 'BLOG'}]</b> ${item.titulo}`);
             loadList('jugadores', item => `<b>${item.nickname}</b> (${item.juego})`);
-            loadList('partidos', item => `<b>VS ${item.rival}</b> - ${item.torneo}`);
+            loadList('partidos', item => `<b>[${item.juego || 'GENERAL'}] VS ${item.rival}</b> - ${item.torneo}`);
             loadList('stream_config', item => `<b>Canal:</b> ${item.canal_username}`);
         });
 
