@@ -73,6 +73,9 @@
                             <input type="url" id="n_i" placeholder="https://...">
                         </div>
 
+                        <label>📹 URL de Video (YouTube, Vimeo o enlace directo - Opcional)</label>
+                        <input type="url" id="n_v" placeholder="Ej: https://www.youtube.com/watch?v=dQw4w9WgXcQ">
+
                         <div style="display:flex; gap:10px; margin-top:10px;">
                             <button type="submit" id="btn-noticias" class="btn-primary">Guardar Noticia</button>
                             <button type="button" id="cancel-noticias" class="btn-danger" style="display:none;" onclick="resetForm('noticias')">Cancelar</button>
@@ -112,6 +115,9 @@
                             <label>🔗 Pegar URL de imagen:</label>
                             <input type="url" id="b_i" placeholder="https://...">
                         </div>
+
+                        <label>📹 URL de Video (YouTube, Vimeo o enlace directo - Opcional)</label>
+                        <input type="url" id="b_v" placeholder="Ej: https://www.youtube.com/watch?v=dQw4w9WgXcQ">
 
                         <div style="display:flex; gap:10px; margin-top:10px;">
                             <button type="submit" id="btn-blogs" class="btn-primary">Guardar Artículo</button>
@@ -273,7 +279,8 @@
                 resumen: n_r.value,
                 contenido: n_co.value,
                 autor: n_a.value,
-                imagen_url: imgUrl
+                imagen_url: imgUrl,
+                video_url: n_v.value
             };
             handleFormSubmit(e, 'noticias', data);
         }
@@ -295,7 +302,8 @@
                 resumen: b_r.value,
                 contenido: b_co.value,
                 autor: b_a.value,
-                imagen_url: imgUrl
+                imagen_url: imgUrl,
+                video_url: b_v.value
             };
             handleFormSubmit(e, 'blogs', data);
         }
@@ -351,12 +359,8 @@
             if (!item) return;
 
             document.getElementById(`edit-id-${cat}`).value = item.id;
-            const titleElem = document.getElementById(`title-${cat}`);
-            if (titleElem) titleElem.innerText = "✏️ Modificar Elemento";
-            
-            const btnElem = document.getElementById(`btn-${cat}`);
-            if (btnElem) btnElem.innerText = "Actualizar Cambios";
-            
+            document.getElementById(`title-${cat}`).innerText = "✏️ Modificar Elemento";
+            document.getElementById(`btn-${cat}`).innerText = "Actualizar Cambios";
             if(document.getElementById(`cancel-${cat}`)) {
                 document.getElementById(`cancel-${cat}`).style.display = 'inline-block';
             }
@@ -368,6 +372,7 @@
                 n_co.value = item.contenido || '';
                 n_a.value = item.autor || '';
                 n_i.value = item.imagen_url || '';
+                n_v.value = item.video_url || '';
             } else if (cat === 'blogs') {
                 b_t.value = item.titulo || '';
                 b_c.value = item.categoria || '';
@@ -375,6 +380,7 @@
                 b_co.value = item.contenido || '';
                 b_a.value = item.autor || '';
                 b_i.value = item.imagen_url || '';
+                b_v.value = item.video_url || '';
             } else if (cat === 'jugadores') {
                 j_nick.value = item.nickname || '';
                 j_real.value = item.nombre_real || '';
@@ -387,9 +393,6 @@
                 p_r.value = item.rival || '';
                 p_f.value = item.fecha_hora || '';
                 p_res.value = item.resultado || '';
-            } else if (cat === 'stream_config') {
-                s_title.value = item.titulo || '';
-                s_channel.value = item.canal_username || '';
             }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -397,12 +400,8 @@
 
         function resetForm(cat) {
             document.getElementById(`edit-id-${cat}`).value = "";
-            const titleElem = document.getElementById(`title-${cat}`);
-            if (titleElem) titleElem.innerText = "Añadir Elemento";
-            
-            const btnElem = document.getElementById(`btn-${cat}`);
-            if (btnElem) btnElem.innerText = "Guardar";
-            
+            document.getElementById(`title-${cat}`).innerText = "Añadir Elemento";
+            document.getElementById(`btn-${cat}`).innerText = "Guardar";
             if(document.getElementById(`cancel-${cat}`)) {
                 document.getElementById(`cancel-${cat}`).style.display = 'none';
             }
