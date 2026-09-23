@@ -8,30 +8,6 @@
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <style>
         /* ==========================================
-           REGLAS DE VISIBILIDAD Y MAQUETACIÓN BASE
-           ========================================== */
-        .wiki-section {
-            display: none;
-        }
-
-        .wiki-section.active {
-            display: block;
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 15px;
-        }
-
-        .empty {
-            color: #94a3b8;
-            font-style: italic;
-            padding: 15px 0;
-        }
-
-        /* ==========================================
            REGLAS DE AUTO-AJUSTE UNIFORME DE IMÁGENES
            ========================================== */
         .card-img-wrapper {
@@ -47,7 +23,7 @@
         .card-img-wrapper img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: cover; /* Ajusta la imagen llenando el espacio sin deformarla */
             object-position: center;
             transition: transform 0.4s ease;
         }
@@ -56,12 +32,13 @@
             transform: scale(1.06);
         }
 
+        /* Foto estilo retrato para Jugadores */
         .player-img-wrapper {
             height: 280px;
         }
 
         .player-img-wrapper img {
-            object-position: top center;
+            object-position: top center; /* Centra el enfoque en el rostro del jugador */
         }
 
         .popular-img {
@@ -99,7 +76,7 @@
         }
 
         .division-block {
-            margin-bottom: 35px;
+            margin-bottom: 45px;
             background: rgba(15, 23, 42, 0.4);
             border: 1px solid rgba(51, 65, 85, 0.5);
             border-radius: 12px;
@@ -116,7 +93,7 @@
         }
 
         .division-header h3 {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             color: #38bdf8;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -502,48 +479,22 @@
             </div>
         </div>
 
-        <!-- SECCIÓN 4: ROSTER CON MENÚ LATERAL -->
+        <!-- SECCIÓN 4: ROSTER POR DIVISIONES -->
         <div id="sec-roster" class="wiki-section">
             <div class="section-header">
                 <h2>🎮 Jugadores & Divisiones del Roster</h2>
                 <p>Conoce al talento que representa a SCARLET ESPORTS en cada disciplina.</p>
             </div>
-
-            <div class="portal-layout">
-                <div id="view-roster"></div>
-
-                <aside class="sidebar">
-                    <div class="sidebar-widget">
-                        <h3>🔍 Buscar Jugador</h3>
-                        <input type="text" id="search-roster" class="search-input" placeholder="Buscar por nickname, nombre o rol..." onkeyup="filterRoster()">
-                    </div>
-
-                    <div class="sidebar-widget">
-                        <h3>🎮 Divisiones / Juegos</h3>
-                        <div id="categories-roster" class="category-pills"></div>
-                    </div>
-
-                    <div class="sidebar-widget">
-                        <h3>⭐ Integrantes / Capitanes</h3>
-                        <div id="popular-roster"></div>
-                    </div>
-
-                    <div class="sidebar-widget">
-                        <h3>🎯 Reclutamiento</h3>
-                        <p style="font-size:0.85rem; color:#94a3b8; margin-bottom:12px;">¿Crees tener el nivel táctico para unirte a nuestras filas?</p>
-                        <button class="social-btn" style="display:block; width:100%; background: #0284c7; color:#fff;" onclick="alert('¡Envíanos tu postulación a contacto@scarletesports.com!')">📩 Postular al Equipo</button>
-                    </div>
-                </aside>
-            </div>
+            <div id="view-roster"></div>
         </div>
 
-        <!-- SECCIÓN 5: PARTIDOS SUBDIVIDIDOS POR JUEGO -->
+        <!-- SECCIÓN 5: PARTIDOS -->
         <div id="sec-partidos" class="wiki-section">
             <div class="section-header">
                 <h2>⚔️ Calendario de Partidos y Resultados</h2>
-                <p>Fechas de torneos, horarios y puntuaciones organizados por disciplina.</p>
+                <p>Fechas de torneos, horarios y puntuaciones de nuestras contiendas.</p>
             </div>
-            <div id="view-partidos"></div>
+            <div id="view-partidos" class="updates-list"></div>
         </div>
 
         <!-- SECCIÓN 6: TRANSMISIÓN EN VIVO -->
@@ -640,26 +591,21 @@
         let twitchEmbedPlayer = null;
         let globalNoticias = [];
         let globalBlogs = [];
-        let globalJugadores = [];
-        let globalPartidos = [];
         let currentPostType = '';
         let currentPostId = null;
 
         function switchSection(secId) {
             document.querySelectorAll('.wiki-section').forEach(el => el.classList.remove('active'));
             const target = document.getElementById('sec-' + secId);
-            if (target) {
-                target.classList.add('active');
-            }
+            if (target) target.classList.add('active');
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            if (secId === 'stream') {
+            if(secId === 'stream') {
                 initTwitchPlayer(currentChannel);
             }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            switchSection('inicio');
             loadNoticias();
             loadBlogs();
             loadRoster();
@@ -745,34 +691,26 @@
                 });
 
                 if (res.ok) {
-                    alert('¡Tu artículo ha sido publicado con éxito!');
+                    alert('¡Tu artículo ha sido publicado con éxito en la comunidad!');
                     closePublicBlogModal();
                     loadBlogs();
                 } else {
-                    alert('Error al publicar el artículo.');
+                    alert('Error publicando el artículo.');
                 }
             } catch(err) {
                 alert('Error de conexión al publicar.');
             }
         }
 
-        /* ==========================================
-           SECCIÓN NOTICIAS
-           ========================================== */
         async function loadNoticias() {
             try {
                 const res = await fetch('/api/noticias');
-                if (!res.ok) throw new Error("HTTP Error " + res.status);
                 const data = await res.json();
-                globalNoticias = Array.isArray(data) ? data.sort((a, b) => b.id - a.id) : [];
+                globalNoticias = (data || []).sort((a, b) => b.id - a.id);
                 renderNoticias(globalNoticias);
                 renderInicioNoticias(globalNoticias.slice(0, 3));
                 renderSidebarNoticias(globalNoticias);
-            } catch(e) { 
-                console.error("Error cargando noticias:", e);
-                renderNoticias([]);
-                renderInicioNoticias([]);
-            }
+            } catch(e) { console.error("Error cargando noticias:", e); }
         }
 
         function renderNoticias(items) {
@@ -838,33 +776,15 @@
             }
         }
 
-        function filterNoticias() {
-            const query = document.getElementById('search-noticias').value.toLowerCase();
-            renderNoticias(globalNoticias.filter(n => (n.titulo && n.titulo.toLowerCase().includes(query)) || (n.resumen && n.resumen.toLowerCase().includes(query))));
-        }
-
-        function filterNoticiasByCategory(cat) {
-            if(cat === 'Todas') return renderNoticias(globalNoticias);
-            renderNoticias(globalNoticias.filter(n => n.categoria === cat));
-        }
-
-        /* ==========================================
-           SECCIÓN BLOGS
-           ========================================== */
         async function loadBlogs() {
             try {
                 const res = await fetch('/api/blogs');
-                if (!res.ok) throw new Error("HTTP Error " + res.status);
                 const data = await res.json();
-                globalBlogs = Array.isArray(data) ? data.sort((a, b) => b.id - a.id) : [];
+                globalBlogs = (data || []).sort((a, b) => b.id - a.id);
                 renderBlogs(globalBlogs);
                 renderInicioBlogs(globalBlogs.slice(0, 3));
                 renderSidebarBlogs(globalBlogs);
-            } catch(e) { 
-                console.error("Error cargando blogs:", e);
-                renderBlogs([]);
-                renderInicioBlogs([]);
-            }
+            } catch(e) { console.error("Error cargando blogs:", e); }
         }
 
         function renderBlogs(items) {
@@ -936,9 +856,19 @@
             }
         }
 
+        function filterNoticias() {
+            const query = document.getElementById('search-noticias').value.toLowerCase();
+            renderNoticias(globalNoticias.filter(n => n.titulo.toLowerCase().includes(query) || (n.resumen && n.resumen.toLowerCase().includes(query))));
+        }
+
+        function filterNoticiasByCategory(cat) {
+            if(cat === 'Todas') return renderNoticias(globalNoticias);
+            renderNoticias(globalNoticias.filter(n => n.categoria === cat));
+        }
+
         function filterBlogs() {
             const query = document.getElementById('search-blogs').value.toLowerCase();
-            renderBlogs(globalBlogs.filter(b => (b.titulo && b.titulo.toLowerCase().includes(query)) || (b.resumen && b.resumen.toLowerCase().includes(query))));
+            renderBlogs(globalBlogs.filter(b => b.titulo.toLowerCase().includes(query) || (b.resumen && b.resumen.toLowerCase().includes(query))));
         }
 
         function filterBlogsByCategory(cat) {
@@ -947,138 +877,50 @@
         }
 
         /* ==========================================
-           SECCIÓN ROSTER CON SIDEBAR Y FILTROS
+           AGRUPACIÓN DINÁMICA DE ROSTER POR DIVISIÓN
            ========================================== */
         async function loadRoster() {
             try {
                 const res = await fetch('/api/jugadores');
-                if (!res.ok) throw new Error("HTTP Error " + res.status);
                 const data = await res.json();
-                globalJugadores = Array.isArray(data) ? data : [];
-                renderRoster(globalJugadores);
-                renderSidebarRoster(globalJugadores);
-            } catch(e) { 
-                console.error("Error cargando roster:", e);
-                renderRoster([]);
-            }
-        }
-
-        function renderRoster(items) {
-            const container = document.getElementById('view-roster');
-            if(!container) return;
-
-            if(!items || !items.length) {
-                container.innerHTML = '<p class="empty">No hay jugadores registrados.</p>';
-                return;
-            }
-
-            const divisiones = {};
-            items.forEach(j => {
-                const game = (j.juego || 'General / Varios').trim().toUpperCase();
-                if (!divisiones[game]) divisiones[game] = [];
-                divisiones[game].push(j);
-            });
-
-            let html = '';
-            for (const [nombreDivision, jugadores] of Object.entries(divisiones)) {
-                html += `
-                    <div class="division-block">
-                        <div class="division-header">
-                            <h3>⚔️ DIVISIÓN ${nombreDivision}</h3>
-                        </div>
-                        <div class="cards-grid">
-                            ${jugadores.map(j => `
-                                <div class="detail-card border-cyan">
-                                    <div class="card-img-wrapper player-img-wrapper">
-                                        <img src="${j.imagen_url \vert{}\vert{} 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
-                                    </div>
-                                    <div class="card-body">
-                                        <h3>"${j.nickname}"</h3>
-                                        <div class="info-badge">Rol: ${j.rol || 'Jugador'}</div>
-                                        <p class="description" style="margin-top:8px;"><strong>Nombre:</strong> ${j.nombre_real \vert{}\vert{} '-'}</p>${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        function renderSidebarRoster(items) {
-            const games = ['Todas', ...new Set(items.map(i => (i.juego || 'General').trim().toUpperCase()).filter(Boolean))];
-            const catBox = document.getElementById('categories-roster');
-            if(catBox) catBox.innerHTML = games.map(g => `<span class="cat-pill" onclick="filterRosterByGame('${g}')">${g}</span>`).join('');
-
-            const popBox = document.getElementById('popular-roster');
-            if(popBox) {
-                popBox.innerHTML = items.slice(0, 5).map(j => `
-                    <div class="popular-item">
-                        <img class="popular-img" src="${j.imagen_url || 'https://via.placeholder.com/100'}" alt="Thumb" style="border-radius:50%; width:45px; height:45px;">
-                        <div>
-                            <div class="popular-title">"${j.nickname}"</div>
-                            <small style="color:#38bdf8; font-size:0.75rem;">${j.juego || 'Esports'} - ${j.rol || 'Jugador'}</small>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function filterRoster() {
-            const query = document.getElementById('search-roster').value.toLowerCase();
-            renderRoster(globalJugadores.filter(j => 
-                (j.nickname && j.nickname.toLowerCase().includes(query)) || 
-                (j.nombre_real && j.nombre_real.toLowerCase().includes(query)) ||
-                (j.rol && j.rol.toLowerCase().includes(query))
-            ));
-        }
-
-        function filterRosterByGame(game) {
-            if(game === 'Todas') return renderRoster(globalJugadores);
-            renderRoster(globalJugadores.filter(j => (j.juego || '').trim().toUpperCase() === game));
-        }
-
-        /* ==========================================
-           SECCIÓN PARTIDOS SUBDIVIDIDOS POR JUEGO
-           ========================================== */
-        async function loadPartidos() {
-            try {
-                const res = await fetch('/api/partidos');
-                if (!res.ok) throw new Error("HTTP Error " + res.status);
-                const data = await res.json();
-                globalPartidos = Array.isArray(data) ? data : [];
-                const container = document.getElementById('view-partidos');
+                const container = document.getElementById('view-roster');
                 if(!container) return;
 
-                if(!globalPartidos || !globalPartidos.length) {
-                    container.innerHTML = '<p class="empty">No hay partidos programados.</p>';
+                if(!data || !data.length) {
+                    container.innerHTML = '<p class="empty">No hay jugadores registrados en el roster.</p>';
                     return;
                 }
 
-                const divisionesPartidos = {};
-                globalPartidos.forEach(p => {
-                    const game = (p.juego || p.torneo || 'Torneo General').trim().toUpperCase();
-                    if(!divisionesPartidos[game]) divisionesPartidos[game] = [];
-                    divisionesPartidos[game].push(p);
+                // Agrupar jugadores por disciplina/juego
+                const divisiones = {};
+                data.forEach(j => {
+                    const game = (j.juego || 'General / Varios').trim().toUpperCase();
+                    if (!divisiones[game]) {
+                        divisiones[game] = [];
+                    }
+                    divisiones[game].push(j);
                 });
 
+                // Generar HTML por cada División
                 let html = '';
-                for (const [nombreJuego, partidos] of Object.entries(divisionesPartidos)) {
+                for (const [nombreDivision, jugadores] of Object.entries(divisiones)) {
                     html += `
                         <div class="division-block">
                             <div class="division-header">
-                                <h3>⚔️ CALENDARIO: ${nombreJuego}</h3>
+                                <h3>⚔️ DIVISIÓN ${nombreDivision}</h3>
                             </div>
-                            <div style="display:flex; flex-direction:column; gap:12px;">
-                                ${partidos.map(p => `
-                                    <div style="background:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155;">
-                                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                                            <span class="version-tag">${p.torneo || 'Torneo Oficial'}</span>
-                                            <span class="info-badge">🕒 ${p.fecha_hora || 'Por definir'}</span>
+                            <div class="cards-grid">
+                                ${jugadores.map(j => `
+                                    <div class="detail-card border-cyan">
+                                        <div class="card-img-wrapper player-img-wrapper">
+                                            <img src="${j.imagen_url || 'https://via.placeholder.com/300?text=Player'}" alt="${j.nickname}">
                                         </div>
-                                        <h3 style="margin-top:10px; font-size:1.2rem; color:#fff;">VS ${p.rival}</h3>
-                                        <p style="margin-top:6px; font-size:0.9rem; color:#cbd5e1;"><strong>Estado / Resultado:</strong> ${p.resultado || 'Pendiente'}</p>
+                                        <div class="card-body">
+                                            <h3>"${j.nickname}"</h3>
+                                            <div class="info-badge">Rol: ${j.rol || 'Jugador'}</div>
+                                            <p class="description" style="margin-top:8px;"><strong>Nombre:</strong> ${j.nombre_real || '-'}</p>
+                                            ${j.redes ? `<p class="description"><strong>Redes:</strong> ${j.redes}</p>` : ''}
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -1087,16 +929,9 @@
                 }
 
                 container.innerHTML = html;
-            } catch(e) { 
-                console.error("Error cargando partidos:", e);
-                const container = document.getElementById('view-partidos');
-                if(container) container.innerHTML = '<p class="empty">No fue posible cargar el calendario.</p>';
-            }
+            } catch(e) { console.error("Error cargando roster:", e); }
         }
 
-        /* ==========================================
-           LECTOR MODAL Y COMENTARIOS
-           ========================================== */
         function openReaderModal(type, id) {
             currentPostType = type;
             currentPostId = id;
@@ -1140,7 +975,7 @@
             const container = document.getElementById('modal-comments-list');
             const stored = JSON.parse(localStorage.getItem(getCommentsKey()) || "[]");
 
-            if(!stored.length) return container.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No hay comentarios aún.</p>';
+            if(!stored.length) return container.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No hay comentarios aún. ¡Sé el primero en opinar!</p>';
 
             container.innerHTML = stored.map(c => `
                 <div class="comment-box">
@@ -1174,23 +1009,17 @@
             renderComments();
         }
 
-        /* ==========================================
-           STREAM CONFIG (CON PROTECCIÓN CONTRA FALLOS)
-           ========================================== */
         async function loadStreamConfig() {
             try {
                 const res = await fetch('/api/stream_config');
-                if (res.ok) {
-                    const data = await res.json();
-                    if(Array.isArray(data) && data.length > 0) {
-                        const cfg = data[0];
-                        currentChannel = cfg.canal_username || 'twitch';
-                        const stTitle = document.getElementById('stream-title');
-                        if (stTitle) stTitle.innerText = cfg.titulo || `Canal Oficial de ${currentChannel}`;
-                    }
+                const data = await res.json();
+                if(data && data.length > 0) {
+                    const cfg = data[0];
+                    currentChannel = cfg.canal_username || 'twitch';
+                    document.getElementById('stream-title').innerText = cfg.titulo || `Canal Oficial de ${currentChannel}`;
                 }
-            } catch(e) { console.warn("Usando configuración de stream por defecto."); }
-            initTwitchPlayer(currentChannel);
+                initTwitchPlayer(currentChannel);
+            } catch(e) { initTwitchPlayer('twitch'); }
         }
 
         function initTwitchPlayer(channelName) {
@@ -1198,28 +1027,17 @@
             if (!embedContainer) return;
             embedContainer.innerHTML = '';
 
-            // Protección en caso de que Twitch SDK no haya cargado o esté bloqueado
-            if (typeof Twitch === 'undefined' || !Twitch.Embed) {
-                setLiveStatus(false);
-                return;
-            }
+            twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
+                width: "100%",
+                height: "100%",
+                channel: channelName,
+                layout: "video",
+                autoplay: true,
+                parent: [window.location.hostname, "localhost", "127.0.0.1"]
+            });
 
-            try {
-                twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
-                    width: "100%",
-                    height: "100%",
-                    channel: channelName,
-                    layout: "video",
-                    autoplay: true,
-                    parent: [window.location.hostname, "localhost", "127.0.0.1"]
-                });
-
-                twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
-                twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
-            } catch(e) {
-                console.error("Error embed Twitch:", e);
-                setLiveStatus(false);
-            }
+            twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
+            twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
         }
 
         function setLiveStatus(isOnline) {
@@ -1231,20 +1049,39 @@
             const offlineCard = document.getElementById('stream-offline-card');
 
             if (isOnline) {
-                if(badge) badge.className = "badge-status online";
-                if(label) label.innerText = "EN VIVO";
-                if(statusText) statusText.innerText = "🔴 ¡El equipo está transmitiendo ahora mismo!";
+                badge.className = "badge-status online";
+                label.innerText = "EN VIVO";
+                statusText.innerText = "🔴 ¡El equipo está transmitiendo ahora mismo!";
                 if(navDot) navDot.style.background = "#ef4444";
                 if(liveContainer) liveContainer.style.display = "block";
                 if(offlineCard) offlineCard.style.display = "none";
             } else {
-                if(badge) badge.className = "badge-status offline";
-                if(label) label.innerText = "OFFLINE";
-                if(statusText) statusText.innerText = "⚪ El canal se encuentra fuera de línea por ahora.";
+                badge.className = "badge-status offline";
+                label.innerText = "OFFLINE";
+                statusText.innerText = "⚪ El canal se encuentra fuera de línea por ahora.";
                 if(navDot) navDot.style.background = "#64748b";
                 if(liveContainer) liveContainer.style.display = "none";
                 if(offlineCard) offlineCard.style.display = "block";
             }
+        }
+
+        async function loadPartidos() {
+            try {
+                const res = await fetch('/api/partidos');
+                const data = await res.json();
+                const c = document.getElementById('view-partidos');
+                if(!data || !data.length) return c.innerHTML = '<p class="empty">No hay partidos registrados.</p>';
+                c.innerHTML = data.map(p => `
+                    <div class="update-full-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <span class="version-tag">${p.torneo || 'Torneo'}</span>
+                            <span class="info-badge">${p.fecha_hora || 'Por definir'}</span>
+                        </div>
+                        <h3 style="margin-top:15px; font-size:1.4rem;">VS ${p.rival}</h3>
+                        <p style="margin-top:10px; font-size:1rem; color:#cbd5e1;"><strong>Estado / Resultado:</strong> ${p.resultado || 'Pendiente'}</p>
+                    </div>
+                `).join('');
+            } catch(e) { console.error("Error cargando partidos:", e); }
         }
     </script>
 </body>
