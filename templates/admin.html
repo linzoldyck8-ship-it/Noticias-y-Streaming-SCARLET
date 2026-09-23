@@ -221,10 +221,26 @@
         const store = {};
 
         function showTab(evt, name) {
+            // Ocultar todas las pestañas y quitar el estado activo de los botones
             document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + name).style.display = 'block';
-            evt.currentTarget.classList.add('active');
+
+            // Mostrar el contenedor de la pestaña actual
+            const targetTab = document.getElementById('tab-' + name);
+            if (targetTab) {
+                targetTab.style.display = 'block';
+            }
+
+            // Marcar como activo el botón correspondiente
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            } else {
+                const activeBtn = document.querySelector(`.tab-btn[onclick*="'${name}'"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+            // Guardar la pestaña actual en el almacenamiento del navegador
+            localStorage.setItem('admin_active_tab', name);
         }
 
         // Convierte un archivo local a una cadena Base64, o devuelve la URL ingresada
@@ -394,6 +410,11 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            // Recuperar y mostrar la última pestaña en la que estabas trabajando
+            const savedTab = localStorage.getItem('admin_active_tab') || 'noticias';
+            showTab(null, savedTab);
+
+            // Cargar los listados
             loadList('noticias', item => `<b>[${item.categoria || 'NOTICIA'}]</b> ${item.titulo}`);
             loadList('blogs', item => `<b>[${item.categoria || 'BLOG'}]</b> ${item.titulo}`);
             loadList('jugadores', item => `<b>${item.nickname}</b> (${item.juego})`);
