@@ -347,8 +347,7 @@
                         <h3>🌐 Redes Oficiales</h3>
                         <div class="social-links">
                             <a href="#" class="social-btn">Twitter / X</a>
-                            <a href="https://www.instagram.com/scarlet.esport?stkn=ZDNlZDc0MzIxNw==" class="social-btn">Instagram</a>
-                           
+                            <a href="https://www.instagram.com/scarlet.esport?stkn=ZDNlZDc0MzIxNw==" target="_blank" class="social-btn">Instagram</a>
                         </div>
                     </div>
                 </aside>
@@ -455,7 +454,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE PUBLICACIÓN LIBRE DE BLOG (NUEVO) -->
+    <!-- MODAL DE PUBLICACIÓN LIBRE DE BLOG -->
     <div id="public-blog-modal" class="modal-overlay" onclick="closePublicBlogModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <button class="modal-close" onclick="closePublicBlogModal()">✕</button>
@@ -772,44 +771,60 @@
             document.getElementById('reader-modal').style.display = 'none';
         }
 
-        function getCommentsKey() { return `comments_${currentPostType}_${currentPostId}`; }
-
-        function renderComments() {
+        async function renderComments() {
             const container = document.getElementById('modal-comments-list');
-            const stored = JSON.parse(localStorage.getItem(getCommentsKey()) || "[]");
+            try {
+                const res = await fetch(`/api/comentarios?post_type=${currentPostType}&post_id=${currentPostId}`);
+                const comments = await res.json();
 
-            if(!stored.length) return container.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No hay comentarios aún. ¡Sé el primero en opinar!</p>';
+                if(!comments || !comments.length) {
+                    container.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No hay comentarios aún. ¡Sé el primero en opinar!</p>';
+                    return;
+                }
 
-            container.innerHTML = stored.map(c => `
-                <div class="comment-box">
-                    <div class="comment-header">
-                        <span class="comment-author">${c.author}</span>
-                        <span class="comment-date">${c.date}</span>
+                container.innerHTML = comments.map(c => `
+                    <div class="comment-box">
+                        <div class="comment-header">
+                            <span class="comment-author">${c.autor || c.author || 'Anónimo'}</span>
+                            <span class="comment-date">${c.creado_en ? new Date(c.creado_en).toLocaleString() : (c.fecha || '')}</span>
+                        </div>
+                        <div class="comment-text">${c.contenido || c.text || ''}</div>
                     </div>
-                    <div class="comment-text">${c.text}</div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch(e) {
+                container.innerHTML = '<p style="color:#ef4444; font-size:0.85rem;">Error al obtener comentarios.</p>';
+            }
         }
 
-        function submitComment(e) {
+        async function submitComment(e) {
             e.preventDefault();
             const authorInput = document.getElementById('comment-author-input');
             const textInput = document.getElementById('comment-text-input');
 
             const newComment = {
-                author: authorInput.value.trim(),
-                text: textInput.value.trim(),
-                date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                post_type: currentPostType,
+                post_id: String(currentPostId),
+                autor: authorInput.value.trim(),
+                contenido: textInput.value.trim()
             };
 
-            const key = getCommentsKey();
-            const stored = JSON.parse(localStorage.getItem(key) || "[]");
-            stored.unshift(newComment);
-            localStorage.setItem(key, JSON.stringify(stored));
+            try {
+                const res = await fetch('/api/comentarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newComment)
+                });
 
-            authorInput.value = '';
-            textInput.value = '';
-            renderComments();
+                if (res.ok) {
+                    authorInput.value = '';
+                    textInput.value = '';
+                    renderComments();
+                } else {
+                    alert('No se pudo guardar el comentario.');
+                }
+            } catch(err) {
+                alert('Error de conexión al enviar comentario.');
+            }
         }
 
         async function loadStreamConfig() {
@@ -830,13 +845,16 @@
             if (!embedContainer) return;
             embedContainer.innerHTML = '';
 
+            const currentHost = window.location.hostname || "localhost";
+            const parents = [currentHost, "localhost", "127.0.0.1"];
+
             twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
                 width: "100%",
                 height: "100%",
                 channel: channelName,
                 layout: "video",
                 autoplay: true,
-                parent: [window.location.hostname, "localhost", "127.0.0.1"]
+                parent: parents
             });
 
             twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
