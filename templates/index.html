@@ -50,6 +50,23 @@
             white-space: pre-line;
             margin-top: 20px;
         }
+
+        /* REPRODUCTOR DE STREAM A PANTALLA COMPLETA */
+        .stream-single-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            aspect-ratio: 16 / 9;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
+            background: #000;
+        }
+        #twitch-embed {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
@@ -143,11 +160,9 @@
                 </div>
             </div>
 
-            <div id="stream-live-container" class="stream-container" style="display: none;">
-                <div id="twitch-embed" class="video-player-box"></div>
-                <div class="chat-box" id="chat-container">
-                    <iframe id="twitch-chat-iframe" src="" height="100%" width="100%" style="border:none;"></iframe>
-                </div>
+            <!-- REPRODUCTOR CENTRAL DE VIDEO SOLO -->
+            <div id="stream-live-container" class="stream-single-container" style="display: none;">
+                <div id="twitch-embed"></div>
             </div>
 
             <div id="stream-offline-card" class="panel" style="text-align: center; padding: 50px 20px;">
@@ -213,17 +228,15 @@
 
             embedContainer.innerHTML = '';
 
+            // Se especifica layout: "video" para omitir el chat integrado
             twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
                 width: "100%",
                 height: "100%",
                 channel: channelName,
+                layout: "video",
+                autoplay: true,
                 parent: [window.location.hostname, "localhost", "127.0.0.1"]
             });
-
-            const chatIframe = document.getElementById('twitch-chat-iframe');
-            if (chatIframe) {
-                chatIframe.src = `https://www.twitch.tv/embed/${channelName}/chat?parent=${window.location.hostname}&parent=localhost&parent=127.0.0.1`;
-            }
 
             twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
             twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
@@ -242,7 +255,7 @@
                 label.innerText = "EN VIVO";
                 statusText.innerText = "🔴 ¡El equipo está transmitiendo ahora mismo!";
                 if(navDot) navDot.style.background = "#ef4444";
-                if(liveContainer) liveContainer.style.display = "grid";
+                if(liveContainer) liveContainer.style.display = "block";
                 if(offlineCard) offlineCard.style.display = "none";
             } else {
                 badge.className = "badge-status offline";
