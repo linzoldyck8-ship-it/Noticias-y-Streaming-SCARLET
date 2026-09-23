@@ -8,6 +8,30 @@
     <script src="https://embed.twitch.tv/embed/v1.js"></script>
     <style>
         /* ==========================================
+           REGLAS DE VISIBILIDAD Y MAQUETACIÓN BASE
+           ========================================== */
+        .wiki-section {
+            display: none;
+        }
+
+        .wiki-section.active {
+            display: block;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .empty {
+            color: #94a3b8;
+            font-style: italic;
+            padding: 15px 0;
+        }
+
+        /* ==========================================
            REGLAS DE AUTO-AJUSTE UNIFORME DE IMÁGENES
            ========================================== */
         .card-img-wrapper {
@@ -624,15 +648,18 @@
         function switchSection(secId) {
             document.querySelectorAll('.wiki-section').forEach(el => el.classList.remove('active'));
             const target = document.getElementById('sec-' + secId);
-            if (target) target.classList.add('active');
+            if (target) {
+                target.classList.add('active');
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            if(secId === 'stream') {
+            if (secId === 'stream') {
                 initTwitchPlayer(currentChannel);
             }
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            switchSection('inicio');
             loadNoticias();
             loadBlogs();
             loadRoster();
@@ -718,11 +745,11 @@
                 });
 
                 if (res.ok) {
-                    alert('¡Tu artículo ha sido publicado con éxito en la comunidad!');
+                    alert('¡Tu artículo ha sido publicado con éxito!');
                     closePublicBlogModal();
                     loadBlogs();
                 } else {
-                    alert('Error publicando el artículo.');
+                    alert('Error al publicar el artículo.');
                 }
             } catch(err) {
                 alert('Error de conexión al publicar.');
@@ -735,12 +762,17 @@
         async function loadNoticias() {
             try {
                 const res = await fetch('/api/noticias');
+                if (!res.ok) throw new Error("HTTP Error " + res.status);
                 const data = await res.json();
-                globalNoticias = (data || []).sort((a, b) => b.id - a.id);
+                globalNoticias = Array.isArray(data) ? data.sort((a, b) => b.id - a.id) : [];
                 renderNoticias(globalNoticias);
                 renderInicioNoticias(globalNoticias.slice(0, 3));
                 renderSidebarNoticias(globalNoticias);
-            } catch(e) { console.error("Error cargando noticias:", e); }
+            } catch(e) { 
+                console.error("Error cargando noticias:", e);
+                renderNoticias([]);
+                renderInicioNoticias([]);
+            }
         }
 
         function renderNoticias(items) {
@@ -808,7 +840,7 @@
 
         function filterNoticias() {
             const query = document.getElementById('search-noticias').value.toLowerCase();
-            renderNoticias(globalNoticias.filter(n => n.titulo.toLowerCase().includes(query) || (n.resumen && n.resumen.toLowerCase().includes(query))));
+            renderNoticias(globalNoticias.filter(n => (n.titulo && n.titulo.toLowerCase().includes(query)) || (n.resumen && n.resumen.toLowerCase().includes(query))));
         }
 
         function filterNoticiasByCategory(cat) {
@@ -822,12 +854,17 @@
         async function loadBlogs() {
             try {
                 const res = await fetch('/api/blogs');
+                if (!res.ok) throw new Error("HTTP Error " + res.status);
                 const data = await res.json();
-                globalBlogs = (data || []).sort((a, b) => b.id - a.id);
+                globalBlogs = Array.isArray(data) ? data.sort((a, b) => b.id - a.id) : [];
                 renderBlogs(globalBlogs);
                 renderInicioBlogs(globalBlogs.slice(0, 3));
                 renderSidebarBlogs(globalBlogs);
-            } catch(e) { console.error("Error cargando blogs:", e); }
+            } catch(e) { 
+                console.error("Error cargando blogs:", e);
+                renderBlogs([]);
+                renderInicioBlogs([]);
+            }
         }
 
         function renderBlogs(items) {
@@ -901,7 +938,7 @@
 
         function filterBlogs() {
             const query = document.getElementById('search-blogs').value.toLowerCase();
-            renderBlogs(globalBlogs.filter(b => b.titulo.toLowerCase().includes(query) || (b.resumen && b.resumen.toLowerCase().includes(query))));
+            renderBlogs(globalBlogs.filter(b => (b.titulo && b.titulo.toLowerCase().includes(query)) || (b.resumen && b.resumen.toLowerCase().includes(query))));
         }
 
         function filterBlogsByCategory(cat) {
@@ -915,11 +952,15 @@
         async function loadRoster() {
             try {
                 const res = await fetch('/api/jugadores');
+                if (!res.ok) throw new Error("HTTP Error " + res.status);
                 const data = await res.json();
-                globalJugadores = data || [];
+                globalJugadores = Array.isArray(data) ? data : [];
                 renderRoster(globalJugadores);
                 renderSidebarRoster(globalJugadores);
-            } catch(e) { console.error("Error cargando roster:", e); }
+            } catch(e) { 
+                console.error("Error cargando roster:", e);
+                renderRoster([]);
+            }
         }
 
         function renderRoster(items) {
@@ -927,11 +968,10 @@
             if(!container) return;
 
             if(!items || !items.length) {
-                container.innerHTML = '<p class="empty">No hay jugadores que coincidan con la búsqueda.</p>';
+                container.innerHTML = '<p class="empty">No hay jugadores registrados.</p>';
                 return;
             }
 
-            // Agrupar jugadores por disciplina/juego
             const divisiones = {};
             items.forEach(j => {
                 const game = (j.juego || 'General / Varios').trim().toUpperCase();
@@ -988,7 +1028,7 @@
         function filterRoster() {
             const query = document.getElementById('search-roster').value.toLowerCase();
             renderRoster(globalJugadores.filter(j => 
-                j.nickname.toLowerCase().includes(query) || 
+                (j.nickname && j.nickname.toLowerCase().includes(query)) || 
                 (j.nombre_real && j.nombre_real.toLowerCase().includes(query)) ||
                 (j.rol && j.rol.toLowerCase().includes(query))
             ));
@@ -1005,17 +1045,17 @@
         async function loadPartidos() {
             try {
                 const res = await fetch('/api/partidos');
+                if (!res.ok) throw new Error("HTTP Error " + res.status);
                 const data = await res.json();
-                globalPartidos = data || [];
+                globalPartidos = Array.isArray(data) ? data : [];
                 const container = document.getElementById('view-partidos');
                 if(!container) return;
 
                 if(!globalPartidos || !globalPartidos.length) {
-                    container.innerHTML = '<p class="empty">No hay partidos o encuentros programados.</p>';
+                    container.innerHTML = '<p class="empty">No hay partidos programados.</p>';
                     return;
                 }
 
-                // Agrupar partidos por juego/torneo
                 const divisionesPartidos = {};
                 globalPartidos.forEach(p => {
                     const game = (p.juego || p.torneo || 'Torneo General').trim().toUpperCase();
@@ -1030,15 +1070,15 @@
                             <div class="division-header">
                                 <h3>⚔️ CALENDARIO: ${nombreJuego}</h3>
                             </div>
-                            <div class="updates-list">
+                            <div style="display:flex; flex-direction:column; gap:12px;">
                                 ${partidos.map(p => `
-                                    <div class="update-full-card">
+                                    <div style="background:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155;">
                                         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                                             <span class="version-tag">${p.torneo || 'Torneo Oficial'}</span>
                                             <span class="info-badge">🕒 ${p.fecha_hora || 'Por definir'}</span>
                                         </div>
-                                        <h3 style="margin-top:15px; font-size:1.4rem;">VS ${p.rival}</h3>
-                                        <p style="margin-top:10px; font-size:1rem; color:#cbd5e1;"><strong>Estado / Resultado:</strong> ${p.resultado || 'Pendiente'}</p>
+                                        <h3 style="margin-top:10px; font-size:1.2rem; color:#fff;">VS ${p.rival}</h3>
+                                        <p style="margin-top:6px; font-size:0.9rem; color:#cbd5e1;"><strong>Estado / Resultado:</strong> ${p.resultado || 'Pendiente'}</p>
                                     </div>
                                 `).join('')}
                             </div>
@@ -1047,7 +1087,11 @@
                 }
 
                 container.innerHTML = html;
-            } catch(e) { console.error("Error cargando partidos:", e); }
+            } catch(e) { 
+                console.error("Error cargando partidos:", e);
+                const container = document.getElementById('view-partidos');
+                if(container) container.innerHTML = '<p class="empty">No fue posible cargar el calendario.</p>';
+            }
         }
 
         /* ==========================================
@@ -1096,7 +1140,7 @@
             const container = document.getElementById('modal-comments-list');
             const stored = JSON.parse(localStorage.getItem(getCommentsKey()) || "[]");
 
-            if(!stored.length) return container.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No hay comentarios aún. ¡Sé el primero en opinar!</p>';
+            if(!stored.length) return container.innerHTML = '<p style="color:#64748b; font-size:0.9rem;">No hay comentarios aún.</p>';
 
             container.innerHTML = stored.map(c => `
                 <div class="comment-box">
@@ -1131,19 +1175,22 @@
         }
 
         /* ==========================================
-           STREAM CONFIG
+           STREAM CONFIG (CON PROTECCIÓN CONTRA FALLOS)
            ========================================== */
         async function loadStreamConfig() {
             try {
                 const res = await fetch('/api/stream_config');
-                const data = await res.json();
-                if(data && data.length > 0) {
-                    const cfg = data[0];
-                    currentChannel = cfg.canal_username || 'twitch';
-                    document.getElementById('stream-title').innerText = cfg.titulo || `Canal Oficial de ${currentChannel}`;
+                if (res.ok) {
+                    const data = await res.json();
+                    if(Array.isArray(data) && data.length > 0) {
+                        const cfg = data[0];
+                        currentChannel = cfg.canal_username || 'twitch';
+                        const stTitle = document.getElementById('stream-title');
+                        if (stTitle) stTitle.innerText = cfg.titulo || `Canal Oficial de ${currentChannel}`;
+                    }
                 }
-                initTwitchPlayer(currentChannel);
-            } catch(e) { initTwitchPlayer('twitch'); }
+            } catch(e) { console.warn("Usando configuración de stream por defecto."); }
+            initTwitchPlayer(currentChannel);
         }
 
         function initTwitchPlayer(channelName) {
@@ -1151,17 +1198,28 @@
             if (!embedContainer) return;
             embedContainer.innerHTML = '';
 
-            twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
-                width: "100%",
-                height: "100%",
-                channel: channelName,
-                layout: "video",
-                autoplay: true,
-                parent: [window.location.hostname, "localhost", "127.0.0.1"]
-            });
+            // Protección en caso de que Twitch SDK no haya cargado o esté bloqueado
+            if (typeof Twitch === 'undefined' || !Twitch.Embed) {
+                setLiveStatus(false);
+                return;
+            }
 
-            twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
-            twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
+            try {
+                twitchEmbedPlayer = new Twitch.Embed("twitch-embed", {
+                    width: "100%",
+                    height: "100%",
+                    channel: channelName,
+                    layout: "video",
+                    autoplay: true,
+                    parent: [window.location.hostname, "localhost", "127.0.0.1"]
+                });
+
+                twitchEmbedPlayer.addEventListener(Twitch.Embed.ONLINE, () => setLiveStatus(true));
+                twitchEmbedPlayer.addEventListener(Twitch.Embed.OFFLINE, () => setLiveStatus(false));
+            } catch(e) {
+                console.error("Error embed Twitch:", e);
+                setLiveStatus(false);
+            }
         }
 
         function setLiveStatus(isOnline) {
@@ -1173,16 +1231,16 @@
             const offlineCard = document.getElementById('stream-offline-card');
 
             if (isOnline) {
-                badge.className = "badge-status online";
-                label.innerText = "EN VIVO";
-                statusText.innerText = "🔴 ¡El equipo está transmitiendo ahora mismo!";
+                if(badge) badge.className = "badge-status online";
+                if(label) label.innerText = "EN VIVO";
+                if(statusText) statusText.innerText = "🔴 ¡El equipo está transmitiendo ahora mismo!";
                 if(navDot) navDot.style.background = "#ef4444";
                 if(liveContainer) liveContainer.style.display = "block";
                 if(offlineCard) offlineCard.style.display = "none";
             } else {
-                badge.className = "badge-status offline";
-                label.innerText = "OFFLINE";
-                statusText.innerText = "⚪ El canal se encuentra fuera de línea por ahora.";
+                if(badge) badge.className = "badge-status offline";
+                if(label) label.innerText = "OFFLINE";
+                if(statusText) statusText.innerText = "⚪ El canal se encuentra fuera de línea por ahora.";
                 if(navDot) navDot.style.background = "#64748b";
                 if(liveContainer) liveContainer.style.display = "none";
                 if(offlineCard) offlineCard.style.display = "block";
