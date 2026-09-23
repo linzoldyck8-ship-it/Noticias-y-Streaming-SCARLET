@@ -60,7 +60,7 @@ def login():
         )
         
         ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
-        PASSWORD_DEFECTO = 'admin123'
+        PASSWORD_DEFECTO = 'scarlet123'
 
         if password and (password == ADMIN_PASSWORD or password == PASSWORD_DEFECTO):
             session['logged_in'] = True
