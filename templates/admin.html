@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Admin - Esports Team</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .image-uploader-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed #334155;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .image-uploader-box label {
+            margin-top: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .upload-divider {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin: 6px 0;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <header class="top-nav">
@@ -29,7 +51,7 @@
             <div class="admin-grid">
                 <div class="panel">
                     <h2 id="title-noticias">Crear Nueva Noticia</h2>
-                    <form onsubmit="handleFormSubmit(event, 'noticias', {titulo: n_t.value, categoria: n_c.value, resumen: n_r.value, contenido: n_co.value, autor: n_a.value, imagen_url: n_i.value})">
+                    <form onsubmit="submitNoticia(event)">
                         <input type="hidden" id="edit-id-noticias">
                         <label>Título de la Noticia</label>
                         <input type="text" id="n_t" placeholder="Ej: ¡Clasificamos a la Gran Final!" required>
@@ -41,8 +63,16 @@
                         <textarea id="n_co" placeholder="Texto completo de la noticia..."></textarea>
                         <label>Autor</label>
                         <input type="text" id="n_a" placeholder="Ej: Manager / Staff" required>
-                        <label>URL de la Imagen / Banner</label>
-                        <input type="url" id="n_i" placeholder="https://..." required>
+                        
+                        <label>Imagen / Banner</label>
+                        <div class="image-uploader-box">
+                            <label>📁 Subir archivo desde dispositivo:</label>
+                            <input type="file" id="n_file" accept="image/*">
+                            <div class="upload-divider">— O TAMBIÉN PUEDES —</div>
+                            <label>🔗 Pegar URL de imagen:</label>
+                            <input type="url" id="n_i" placeholder="https://...">
+                        </div>
+
                         <div style="display:flex; gap:10px; margin-top:10px;">
                             <button type="submit" id="btn-noticias" class="btn-primary">Guardar Noticia</button>
                             <button type="button" id="cancel-noticias" class="btn-danger" style="display:none;" onclick="resetForm('noticias')">Cancelar</button>
@@ -61,7 +91,7 @@
             <div class="admin-grid">
                 <div class="panel">
                     <h2 id="title-blogs">Crear Nuevo Artículo / Blog</h2>
-                    <form onsubmit="handleFormSubmit(event, 'blogs', {titulo: b_t.value, categoria: b_c.value, resumen: b_r.value, contenido: b_co.value, autor: b_a.value, imagen_url: b_i.value})">
+                    <form onsubmit="submitBlog(event)">
                         <input type="hidden" id="edit-id-blogs">
                         <label>Título del Artículo</label>
                         <input type="text" id="b_t" placeholder="Ej: Análisis táctico del último parche" required>
@@ -73,8 +103,16 @@
                         <textarea id="b_co" placeholder="Escribe la entrada completa del blog aquí..." style="min-height: 150px;"></textarea>
                         <label>Autor / Escritor</label>
                         <input type="text" id="b_a" placeholder="Ej: Coach / Redacción" required>
-                        <label>URL de Imagen Destacada</label>
-                        <input type="url" id="b_i" placeholder="https://..." required>
+                        
+                        <label>Imagen Destacada</label>
+                        <div class="image-uploader-box">
+                            <label>📁 Subir archivo desde dispositivo:</label>
+                            <input type="file" id="b_file" accept="image/*">
+                            <div class="upload-divider">— O TAMBIÉN PUEDES —</div>
+                            <label>🔗 Pegar URL de imagen:</label>
+                            <input type="url" id="b_i" placeholder="https://...">
+                        </div>
+
                         <div style="display:flex; gap:10px; margin-top:10px;">
                             <button type="submit" id="btn-blogs" class="btn-primary">Guardar Artículo</button>
                             <button type="button" id="cancel-blogs" class="btn-danger" style="display:none;" onclick="resetForm('blogs')">Cancelar</button>
@@ -93,7 +131,7 @@
             <div class="admin-grid">
                 <div class="panel">
                     <h2 id="title-jugadores">Agregar Jugador al Roster</h2>
-                    <form onsubmit="handleFormSubmit(event, 'jugadores', {nickname: j_nick.value, nombre_real: j_real.value, juego: j_game.value, rol: j_rol.value, redes: j_redes.value, imagen_url: j_i.value})">
+                    <form onsubmit="submitJugador(event)">
                         <input type="hidden" id="edit-id-jugadores">
                         <label>Nickname / ID</label>
                         <input type="text" id="j_nick" placeholder="Ej: Shadow99" required>
@@ -105,8 +143,16 @@
                         <input type="text" id="j_rol" placeholder="Ej: IGL / Awper / Midlaner" required>
                         <label>Redes Sociales (Twitter/IG/Twitch)</label>
                         <input type="text" id="j_redes" placeholder="@usuario_twitter">
-                        <label>URL de Foto del Jugador</label>
-                        <input type="url" id="j_i" placeholder="https://..." required>
+                        
+                        <label>Foto del Jugador</label>
+                        <div class="image-uploader-box">
+                            <label>📁 Subir archivo desde dispositivo:</label>
+                            <input type="file" id="j_file" accept="image/*">
+                            <div class="upload-divider">— O TAMBIÉN PUEDES —</div>
+                            <label>🔗 Pegar URL de imagen:</label>
+                            <input type="url" id="j_i" placeholder="https://...">
+                        </div>
+
                         <div style="display:flex; gap:10px; margin-top:10px;">
                             <button type="submit" id="btn-jugadores" class="btn-primary">Guardar Jugador</button>
                             <button type="button" id="cancel-jugadores" class="btn-danger" style="display:none;" onclick="resetForm('jugadores')">Cancelar</button>
@@ -153,7 +199,7 @@
             <div class="admin-grid">
                 <div class="panel">
                     <h2>Configuración del Canal de Transmisión</h2>
-                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Ingresa el usuario de Twitch oficial para vincular el reproductor en vivo y el chat.</p>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Ingresa el usuario de Twitch oficial para vincular el reproductor en vivo.</p>
                     <form onsubmit="handleFormSubmit(event, 'stream_config', {titulo: s_title.value, canal_username: s_channel.value})">
                         <input type="hidden" id="edit-id-stream_config">
                         <label>Título Personalizado de la Transmisión</label>
@@ -181,8 +227,92 @@
             evt.currentTarget.classList.add('active');
         }
 
-        async function handleFormSubmit(e, cat, data) {
+        // Convierte un archivo local a una cadena Base64, o devuelve la URL ingresada
+        async function processImageInput(fileInputId, urlInputId, existingValue = '') {
+            const fileInput = document.getElementById(fileInputId);
+            const urlInput = document.getElementById(urlInputId);
+
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = err => reject(err);
+                    reader.readAsDataURL(fileInput.files[0]);
+                });
+            } else if (urlInput && urlInput.value.trim() !== '') {
+                return urlInput.value.trim();
+            }
+            return existingValue;
+        }
+
+        async function submitNoticia(e) {
             e.preventDefault();
+            const editId = document.getElementById('edit-id-noticias').value;
+            const existingImg = editId && store.noticias ? (store.noticias.find(x => x.id == editId) || {}).imagen_url : '';
+            const imgUrl = await processImageInput('n_file', 'n_i', existingImg);
+
+            if (!imgUrl) {
+                alert("Debes seleccionar una imagen desde tu dispositivo o ingresar una URL.");
+                return;
+            }
+
+            const data = {
+                titulo: n_t.value,
+                categoria: n_c.value,
+                resumen: n_r.value,
+                contenido: n_co.value,
+                autor: n_a.value,
+                imagen_url: imgUrl
+            };
+            handleFormSubmit(e, 'noticias', data);
+        }
+
+        async function submitBlog(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id-blogs').value;
+            const existingImg = editId && store.blogs ? (store.blogs.find(x => x.id == editId) || {}).imagen_url : '';
+            const imgUrl = await processImageInput('b_file', 'b_i', existingImg);
+
+            if (!imgUrl) {
+                alert("Debes seleccionar una imagen desde tu dispositivo o ingresar una URL.");
+                return;
+            }
+
+            const data = {
+                titulo: b_t.value,
+                categoria: b_c.value,
+                resumen: b_r.value,
+                contenido: b_co.value,
+                autor: b_a.value,
+                imagen_url: imgUrl
+            };
+            handleFormSubmit(e, 'blogs', data);
+        }
+
+        async function submitJugador(e) {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id-jugadores').value;
+            const existingImg = editId && store.jugadores ? (store.jugadores.find(x => x.id == editId) || {}).imagen_url : '';
+            const imgUrl = await processImageInput('j_file', 'j_i', existingImg);
+
+            if (!imgUrl) {
+                alert("Debes seleccionar una imagen desde tu dispositivo o ingresar una URL.");
+                return;
+            }
+
+            const data = {
+                nickname: j_nick.value,
+                nombre_real: j_real.value,
+                juego: j_game.value,
+                rol: j_rol.value,
+                redes: j_redes.value,
+                imagen_url: imgUrl
+            };
+            handleFormSubmit(e, 'jugadores', data);
+        }
+
+        async function handleFormSubmit(e, cat, data) {
+            if(e) e.preventDefault();
             const editId = document.getElementById(`edit-id-${cat}`).value;
             const url = editId ? `/api/${cat}/${editId}` : `/api/${cat}`;
             const method = editId ? 'PUT' : 'POST';
@@ -196,7 +326,7 @@
                 const resData = await response.json();
                 
                 if(!response.ok) {
-                    alert("Error guardando en la base de datos: " + (resData.error || "Asegúrate de ejecutar el comando SQL en Supabase."));
+                    alert("Error guardando en la base de datos: " + (resData.error || "Verifica la configuración."));
                     return;
                 }
                 window.location.reload();
@@ -212,6 +342,9 @@
             document.getElementById(`edit-id-${cat}`).value = item.id;
             document.getElementById(`title-${cat}`).innerText = "✏️ Modificar Elemento";
             document.getElementById(`btn-${cat}`).innerText = "Actualizar Cambios";
+            if(document.getElementById(`cancel-${cat}`)) {
+                document.getElementById(`cancel-${cat}`).style.display = 'inline-block';
+            }
 
             if (cat === 'noticias') {
                 n_t.value = item.titulo || '';
@@ -248,6 +381,9 @@
             document.getElementById(`edit-id-${cat}`).value = "";
             document.getElementById(`title-${cat}`).innerText = "Añadir Elemento";
             document.getElementById(`btn-${cat}`).innerText = "Guardar";
+            if(document.getElementById(`cancel-${cat}`)) {
+                document.getElementById(`cancel-${cat}`).style.display = 'none';
+            }
         }
 
         async function removeItem(cat, id) {
