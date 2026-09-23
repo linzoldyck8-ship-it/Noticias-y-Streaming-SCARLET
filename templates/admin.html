@@ -67,10 +67,10 @@
                         <input type="text" id="b_t" placeholder="Ej: Análisis táctico del último parche" required>
                         <label>Categoría / Tema</label>
                         <input type="text" id="b_c" placeholder="Ej: Meta / Opinión / Guía" required>
-                        <label>Resumen Breve</label>
-                        <input type="text" id="b_r" placeholder="Breve descripción..." required>
-                        <label>Contenido del Blog</label>
-                        <textarea id="b_co" placeholder="Escribe el artículo completo aquí..."></textarea>
+                        <label>Resumen Breve (Aparece en la portada)</label>
+                        <input type="text" id="b_r" placeholder="Un gancho corto para atraer lectores..." required>
+                        <label>Contenido Completo del Artículo</label>
+                        <textarea id="b_co" placeholder="Escribe la entrada completa del blog aquí..." style="min-height: 150px;"></textarea>
                         <label>Autor / Escritor</label>
                         <input type="text" id="b_a" placeholder="Ej: Coach / Redacción" required>
                         <label>URL de Imagen Destacada</label>
@@ -187,12 +187,22 @@
             const url = editId ? `/api/${cat}/${editId}` : `/api/${cat}`;
             const method = editId ? 'PUT' : 'POST';
 
-            await fetch(url, {
-                method: method,
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
-            });
-            window.location.reload();
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                const resData = await response.json();
+                
+                if(!response.ok) {
+                    alert("Error guardando en la base de datos: " + (resData.error || "Asegúrate de ejecutar el comando SQL en Supabase."));
+                    return;
+                }
+                window.location.reload();
+            } catch(err) {
+                alert("Error de conexión al guardar: " + err);
+            }
         }
 
         function prepareEdit(cat, id) {
