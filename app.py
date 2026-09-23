@@ -1,98 +1,138 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from functools import wraps
 from supabase import create_client, Client
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'clave_secreta_esports_team')
 
-# Render lee estas variables automáticamente desde su panel Environment Variables
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
 
-# Inicialización de Supabase
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+supabase: Client = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as e:
+        print("Error al conectar con Supabase:", e)
 
-# Nombre de usuario de Twitch oficial
-TWITCH_CHANNEL = "tu_canal_de_twitch"
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            return jsonify({'error': 'No autorizado. Inicia sesión nuevamente.'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
+# --- VISTAS / PÁGINAS ---
 @app.route('/')
 def index():
-    return render_template('index.html', twitch_channel=TWITCH_CHANNEL)
+    noticias = []
+    blogs = []
+    if supabase:
+        try:
+            res_n = supabase.table('noticias').select('*').order('creado_en', desc=True).execute()
+            noticias = res_n.data if res_n.data else []
+        except Exception as e:
+            print("Error cargando noticias en inicio:", e)
+        try:
+            res_b = supabase.table('blogs').select('*').order('creado_en', desc=True).execute()
+            blogs = res_b.data if res_b.data else []
+        except Exception as e:
+            print("Error cargando blogs en inicio:", e)
+    return render_template('index.html', noticias=noticias, blogs=blogs)
 
-# --- RUTAS DE NOTICIAS ---
-@app.route('/api/noticias', methods=['GET', 'POST'])
-def handle_noticias():
+@app.route('/admin')
+def admin():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return render_template('admin.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        password = (
+            request.form.get('password') or 
+            request.form.get('clave') or 
+            request.form.get('contrasena') or 
+            request.form.get('pass')
+        )
+        
+        ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+        PASSWORD_DEFECTO = 'admin123'
+
+        if password and (password == ADMIN_PASSWORD or password == PASSWORD_DEFECTO):
+            session['logged_in'] = True
+            return redirect(url_for('admin'))
+            
+        return render_template('login.html', error='Contraseña incorrecta')
+        
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
+
+# --- API CRUD UNIFICADA PARA ESPORTS Y BLOGS ---
+TABLAS_PERMITIDAS = ['noticias', 'blogs', 'jugadores', 'partidos', 'stream_config']
+
+@app.route('/api/<tabla>', methods=['GET'])
+def get_items(tabla):
+    if tabla not in TABLAS_PERMITIDAS:
+        return jsonify({'error': 'Tabla no válida'}), 400
     if not supabase:
         return jsonify([])
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('noticias').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('noticias').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
+    try:
+        res = supabase.table(tabla).select('*').execute()
+        return jsonify(res.data if res.data else [])
+    except Exception as e:
+        print(f"Error al obtener {tabla}:", e)
+        return jsonify([]), 500
 
-@app.route('/api/noticias/<int:noticia_id>', methods=['DELETE'])
-def delete_noticia(noticia_id):
+@app.route('/api/<tabla>', methods=['POST'])
+@admin_required
+def create_item(tabla):
+    if tabla not in TABLAS_PERMITIDAS:
+        return jsonify({'error': 'Tabla no válida'}), 400
     if not supabase:
-        return jsonify({})
-    res = supabase.table('noticias').delete().eq('id', noticia_id).execute()
-    return jsonify(res.data)
+        return jsonify({'error': 'Base de datos no conectada'}), 500
+    try:
+        data = request.get_json()
+        res = supabase.table(tabla).insert(data).execute()
+        return jsonify({'status': 'created', 'data': res.data})
+    except Exception as e:
+        print(f"Error al crear en {tabla}:", e)
+        return jsonify({'error': str(e)}), 500
 
-# --- RUTAS DE BLOGS ---
-@app.route('/api/blogs', methods=['GET', 'POST'])
-def handle_blogs():
+@app.route('/api/<tabla>/<id>', methods=['PUT'])
+@admin_required
+def update_item(tabla, id):
+    if tabla not in TABLAS_PERMITIDAS:
+        return jsonify({'error': 'Tabla no válida'}), 400
     if not supabase:
-        return jsonify([])
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('blogs').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('blogs').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
+        return jsonify({'error': 'Base de datos no conectada'}), 500
+    try:
+        data = request.get_json()
+        res = supabase.table(tabla).update(data).eq('id', id).execute()
+        return jsonify({'status': 'updated', 'data': res.data})
+    except Exception as e:
+        print(f"Error al actualizar {tabla}:", e)
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/api/blogs/<int:blog_id>', methods=['DELETE'])
-def delete_blog(blog_id):
+@app.route('/api/<tabla>/<id>', methods=['DELETE'])
+@admin_required
+def delete_item(tabla, id):
+    if tabla not in TABLAS_PERMITIDAS:
+        return jsonify({'error': 'Tabla no válida'}), 400
     if not supabase:
-        return jsonify({})
-    res = supabase.table('blogs').delete().eq('id', blog_id).execute()
-    return jsonify(res.data)
-
-# --- RUTAS DE JUGADORES ---
-@app.route('/api/jugadores', methods=['GET', 'POST'])
-def handle_jugadores():
-    if not supabase:
-        return jsonify([])
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('jugadores').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('jugadores').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
-
-@app.route('/api/jugadores/<int:jugador_id>', methods=['DELETE'])
-def delete_jugador(jugador_id):
-    if not supabase:
-        return jsonify({})
-    res = supabase.table('jugadores').delete().eq('id', jugador_id).execute()
-    return jsonify(res.data)
-
-# --- RUTAS DE PARTIDOS ---
-@app.route('/api/partidos', methods=['GET', 'POST'])
-def handle_partidos():
-    if not supabase:
-        return jsonify([])
-    if request.method == 'POST':
-        data = request.json
-        res = supabase.table('partidos').insert(data).execute()
-        return jsonify(res.data)
-    res = supabase.table('partidos').select('*').order('creado_en', desc=True).execute()
-    return jsonify(res.data)
-
-@app.route('/api/partidos/<int:partido_id>', methods=['DELETE'])
-def delete_partido(partido_id):
-    if not supabase:
-        return jsonify({})
-    res = supabase.table('partidos').delete().eq('id', partido_id).execute()
-    return jsonify(res.data)
+        return jsonify({'error': 'Base de datos no conectada'}), 500
+    try:
+        res = supabase.table(tabla).delete().eq('id', id).execute()
+        return jsonify({'status': 'deleted', 'data': res.data})
+    except Exception as e:
+        print(f"Error al eliminar de {tabla}:", e)
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
